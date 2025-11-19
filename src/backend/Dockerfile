@@ -50,6 +50,6 @@ RUN apk del python3 make g++
 RUN chown -R node:node /app
 USER node
 
-EXPOSE 5000
+EXPOSE 8080
 
 CMD ["node", "server.js"]
