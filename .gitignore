@@ -45,3 +45,8 @@ coverage/
 
 # Docker
 .dockerignore
+
+# Large sample files (keep essential videos)
+sample-data/*.mp4
+sample-data/*.jpg
+sample-data/*.png
