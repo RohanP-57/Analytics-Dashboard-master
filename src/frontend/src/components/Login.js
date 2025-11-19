@@ -108,7 +108,7 @@ const Login = () => {
           transform: 'translate(-50%, -50%)'
         }}
       >
-        <source src="/dash.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dskglf2tn/video/upload/v1763585255/dash_qusuhb.mp4" type="video/mp4" />
       </video>
 
       {/* Full screen dark overlay */}
