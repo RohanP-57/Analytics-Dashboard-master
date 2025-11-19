@@ -1,0 +1,88 @@
+{
+  "drone_id": "DRONE_ZONE_1",
+  "date": "2025-01-10",
+  "location": "Safety Zone Alpha",
+  "total_violations": 8,
+  "violations": [
+    {
+      "id": "v1",
+      "type": "ppe_kit_detection",
+      "timestamp": "10:15:30",
+      "latitude": 23.74891,
+      "longitude": 85.98523,
+      "confidence": 0.89,
+      "frame_number": 150,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v2", 
+      "type": "crowding_of_people",
+      "timestamp": "10:16:45",
+      "latitude": 23.74895,
+      "longitude": 85.98530,
+      "confidence": 0.92,
+      "frame_number": 225,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v3",
+      "type": "fire_smoke",
+      "timestamp": "10:18:12",
+      "latitude": 23.74888,
+      "longitude": 85.98515,
+      "confidence": 0.95,
+      "frame_number": 312,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v4",
+      "type": "stagnant_water",
+      "timestamp": "10:20:33",
+      "latitude": 23.74902,
+      "longitude": 85.98540,
+      "confidence": 0.78,
+      "frame_number": 445,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v5",
+      "type": "loose_boulder",
+      "timestamp": "10:22:18",
+      "latitude": 23.74885,
+      "longitude": 85.98508,
+      "confidence": 0.84,
+      "frame_number": 558,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v6",
+      "type": "crowding_of_vehicles",
+      "timestamp": "10:24:55",
+      "latitude": 23.74910,
+      "longitude": 85.98555,
+      "confidence": 0.87,
+      "frame_number": 672,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v7",
+      "type": "red_flag",
+      "timestamp": "10:26:40",
+      "latitude": 23.74875,
+      "longitude": 85.98495,
+      "confidence": 0.91,
+      "frame_number": 789,
+      "image_url": "https://picsum.photos/150"
+    },
+    {
+      "id": "v8",
+      "type": "rest_shelter_lighting",
+      "timestamp": "10:28:15",
+      "latitude": 23.74920,
+      "longitude": 85.98570,
+      "confidence": 0.76,
+      "frame_number": 895,
+      "image_url": "https://picsum.photos/150"
+    }
+  ]
+}

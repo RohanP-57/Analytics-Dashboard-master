@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Safety Zone A",
+        "type": "restricted_area",
+        "security_level": "high"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [85.9840, 23.7480],
+          [85.9870, 23.7480],
+          [85.9870, 23.7510],
+          [85.9840, 23.7510],
+          [85.9840, 23.7480]
+        ]]
+      }
+    },
+    {
+      "type": "Feature", 
+      "properties": {
+        "name": "Safety Zone B",
+        "type": "monitoring_area",
+        "security_level": "medium"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [85.9820, 23.7450],
+          [85.9890, 23.7450],
+          [85.9890, 23.7520],
+          [85.9820, 23.7520],
+          [85.9820, 23.7450]
+        ]]
+      }
+    }
+  ]
+} 
