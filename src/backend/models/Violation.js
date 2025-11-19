@@ -170,7 +170,7 @@ class ViolationModel {
   async getAnalytics() {
     try {
       const totalViolationsResult = await database.get('SELECT COUNT(*) as total FROM violations');
-      const totalViolations = totalViolationsResult.total;
+      const totalViolations = totalViolationsResult ? totalViolationsResult.total : 0;
       
       const typeDistribution = await database.all(`
         SELECT type as name, COUNT(*) as value 
@@ -228,20 +228,35 @@ class ViolationModel {
 
       return {
         kpis: {
-          total_violations: totalViolations,
-          unique_drones: uniqueDrones.count,
-          unique_locations: uniqueLocations.count,
-          violation_types: uniqueTypes.count
+          total_violations: totalViolations || 0,
+          unique_drones: uniqueDrones ? uniqueDrones.count : 0,
+          unique_locations: uniqueLocations ? uniqueLocations.count : 0,
+          violation_types: uniqueTypes ? uniqueTypes.count : 0
         },
         charts: {
-          type_distribution: typeDistribution,
-          time_series: timeSeriesData,
-          drone_performance: dronePerformance,
-          location_breakdown: locationStats
+          type_distribution: typeDistribution || [],
+          time_series: timeSeriesData || [],
+          drone_performance: dronePerformance || [],
+          location_breakdown: locationStats || []
         }
       };
     } catch (err) {
-      throw new Error(`Database error: ${err.message}`);
+      console.error('Analytics error:', err);
+      // Return default empty analytics structure if database query fails
+      return {
+        kpis: {
+          total_violations: 0,
+          unique_drones: 0,
+          unique_locations: 0,
+          violation_types: 0
+        },
+        charts: {
+          type_distribution: [],
+          time_series: [],
+          drone_performance: [],
+          location_breakdown: []
+        }
+      };
     }
   }
 

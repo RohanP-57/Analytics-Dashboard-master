@@ -113,6 +113,16 @@ class Database {
       )
     `;
 
+    const createFeaturesTable = `
+      CREATE TABLE IF NOT EXISTS features (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        display_name TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     this.db.serialize(() => {
       this.db.run(createUsersTable, (err) => {
         if (err) {
@@ -187,6 +197,15 @@ class Database {
           this.insertDefaultSites();
         }
       });
+
+      this.db.run(createFeaturesTable, (err) => {
+        if (err) {
+          console.error('Error creating features table:', err.message);
+        } else {
+          console.log('Features table ready');
+          this.insertDefaultFeatures();
+        }
+      });
     });
   }
 
@@ -250,6 +269,33 @@ class Database {
 
     // Create default admin user
     this.createDefaultAdmin();
+  }
+
+  insertDefaultFeatures() {
+    const defaultFeatures = [
+      { name: 'ppe_kit_detection', display_name: 'PPE Kit Detection' },
+      { name: 'crowding_of_people', display_name: 'Crowding of People' },
+      { name: 'crowding_of_vehicles', display_name: 'Crowding of Vehicles' },
+      { name: 'rest_shelter_lighting', display_name: 'Rest Shelter Lighting' },
+      { name: 'stagnant_water', display_name: 'Stagnant Water' },
+      { name: 'fire_smoke', display_name: 'Fire/Smoke' },
+      { name: 'loose_boulder', display_name: 'Loose Boulder' },
+      { name: 'red_flag', display_name: 'Red Flag' }
+    ];
+
+    defaultFeatures.forEach(feature => {
+      this.db.run(
+        'INSERT OR IGNORE INTO features (name, display_name) VALUES (?, ?)',
+        [feature.name, feature.display_name],
+        (err) => {
+          if (err) {
+            console.error(`Error inserting feature ${feature.name}:`, err.message);
+          } else {
+            console.log(`Feature ${feature.display_name} ready`);
+          }
+        }
+      );
+    });
   }
 
   async createDefaultAdmin() {

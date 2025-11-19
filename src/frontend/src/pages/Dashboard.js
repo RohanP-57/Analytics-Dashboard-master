@@ -26,16 +26,28 @@ const Dashboard = () => {
         analyticsAPI.getDroneChart(),
       ]);
 
-      setKpis(kpiResponse.data.kpis);
-      setPieData(pieResponse.data.chart_data);
-      setTimeSeriesData(timeSeriesResponse.data.chart_data);
-      setDroneData(droneResponse.data.chart_data.map(item => ({
+      // Handle the correct response structure from analytics API
+      setKpis(kpiResponse.data.kpis || {});
+      setPieData(pieResponse.data.chart_data || []);
+      setTimeSeriesData(timeSeriesResponse.data.chart_data || []);
+      setDroneData((droneResponse.data.chart_data || []).map(item => ({
         label: item.drone_id,
         value: item.total_violations
       })));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
+      
+      // Set default values to prevent undefined errors
+      setKpis({
+        total_violations: 0,
+        unique_drones: 0,
+        unique_locations: 0,
+        violation_types: 0
+      });
+      setPieData([]);
+      setTimeSeriesData([]);
+      setDroneData([]);
     } finally {
       setLoading(false);
     }
