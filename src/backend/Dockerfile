@@ -4,13 +4,13 @@ FROM node:18-alpine as frontend-build
 WORKDIR /app/frontend
 
 # Copy frontend package files
-COPY ../frontend/package*.json ./
+COPY src/frontend/package*.json ./
 
 # Install frontend dependencies
 RUN npm ci --only=production
 
 # Copy frontend source
-COPY ../frontend/ ./
+COPY src/frontend/ ./
 
 # Build React app
 RUN npm run build
@@ -24,18 +24,18 @@ RUN apk add --no-cache python3 make g++
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY src/backend/package*.json ./
 
 # Install only production dependencies and rebuild native modules
 RUN npm ci --only=production && npm rebuild && npm cache clean --force
 
 # Copy only necessary source files
-COPY server.js ./
-COPY routes/ ./routes/
-COPY utils/ ./utils/
-COPY models/ ./models/
-COPY middleware/ ./middleware/
-COPY validations/ ./validations/
+COPY src/backend/server.js ./
+COPY src/backend/routes/ ./routes/
+COPY src/backend/utils/ ./utils/
+COPY src/backend/models/ ./models/
+COPY src/backend/middleware/ ./middleware/
+COPY src/backend/validations/ ./validations/
 
 # Copy built frontend from previous stage
 COPY --from=frontend-build /app/frontend/build ./public
