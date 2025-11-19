@@ -33,6 +33,33 @@ class Database {
       )
     `;
 
+    const createAdminTable = `
+      CREATE TABLE IF NOT EXISTS admin (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT,
+        permissions TEXT DEFAULT 'all',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    const createUserTable = `
+      CREATE TABLE IF NOT EXISTS user (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT,
+        department TEXT,
+        access_level TEXT DEFAULT 'basic',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     const createReportsTable = `
       CREATE TABLE IF NOT EXISTS reports (
         report_id TEXT PRIMARY KEY,
@@ -92,6 +119,22 @@ class Database {
           console.error('Error creating users table:', err.message);
         } else {
           console.log('Users table ready');
+        }
+      });
+
+      this.db.run(createAdminTable, (err) => {
+        if (err) {
+          console.error('Error creating admin table:', err.message);
+        } else {
+          console.log('Admin table ready');
+        }
+      });
+
+      this.db.run(createUserTable, (err) => {
+        if (err) {
+          console.error('Error creating user table:', err.message);
+        } else {
+          console.log('User table ready');
         }
       });
 
@@ -204,6 +247,36 @@ class Database {
         }
       );
     });
+
+    // Create default admin user
+    this.createDefaultAdmin();
+  }
+
+  async createDefaultAdmin() {
+    const bcrypt = require('bcryptjs');
+    
+    try {
+      // Check if admin user already exists in admin table
+      const existingAdmin = await this.get(
+        'SELECT id FROM admin WHERE email = ?',
+        ['admin@ccl.com']
+      );
+
+      if (!existingAdmin) {
+        // Hash the default password
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        
+        // Insert default admin user into admin table
+        await this.run(
+          'INSERT INTO admin (username, email, password_hash, full_name, permissions, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          ['admin', 'admin@ccl.com', hashedPassword, 'Administrator', 'all', new Date().toISOString()]
+        );
+        
+        console.log('Default admin user created: admin@ccl.com / admin123');
+      }
+    } catch (err) {
+      console.error('Error creating default admin:', err.message);
+    }
   }
 
   close() {
