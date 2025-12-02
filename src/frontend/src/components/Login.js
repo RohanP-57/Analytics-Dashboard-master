@@ -91,31 +91,49 @@ const Login = () => {
 
   return (
     <>
-      {/* Animated Background - CSP Compliant */}
-      <div className="fixed inset-0 z-0">
-        {/* Primary Background Image with Animation */}
-        <div 
+      {/* Local Video Background - CSP Compliant */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0 opacity-80"
+        style={{
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
+        onLoadStart={() => console.log('Local video loading started')}
+        onCanPlay={() => console.log('Local video can play')}
+        onError={(e) => {
+          console.error('Local video error:', e);
+          // Fallback to animated background if video fails
+          e.target.style.display = 'none';
+          const fallback = document.getElementById('video-fallback');
+          if (fallback) fallback.style.display = 'block';
+        }}
+      >
+        <source src="/login_video.mp4" type="video/mp4" />
+      </video>
+
+      {/* Fallback Animated Background */}
+      <div id="video-fallback" className="fixed inset-0 z-0" style={{ display: 'none' }}>
+        <div
           className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-[4000ms] ease-in-out"
           style={{
             backgroundImage: 'url(/background.jpg)',
             transform: `scale(${imageTransform.scale}) translate(${imageTransform.x}%, ${imageTransform.y}%)`
           }}
         ></div>
-        
-        {/* Animated Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-gray-900/70 to-black/80 animate-pulse"></div>
-        
-        {/* Moving Particles Effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-2 h-2 bg-blue-400/30 rounded-full animate-bounce" style={{top: '20%', left: '10%', animationDelay: '0s'}}></div>
-          <div className="absolute w-1 h-1 bg-white/20 rounded-full animate-ping" style={{top: '60%', left: '80%', animationDelay: '1s'}}></div>
-          <div className="absolute w-3 h-3 bg-blue-300/20 rounded-full animate-pulse" style={{top: '80%', left: '20%', animationDelay: '2s'}}></div>
-          <div className="absolute w-1 h-1 bg-white/30 rounded-full animate-bounce" style={{top: '30%', left: '70%', animationDelay: '3s'}}></div>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-gray-900/70 to-black/80"></div>
       </div>
 
       {/* Content Overlay */}
-      <div className="fixed inset-0 bg-black/30 z-10"></div>
+      <div className="fixed inset-0 bg-black/60 z-10"></div>
 
       {/* Powered By Card - Bottom Right */}
       <div className="fixed bottom-0 right-1 z-30">
