@@ -254,17 +254,79 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint to check frontend files
+app.get('/api/debug/frontend', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  const publicPath = path.join(__dirname, 'public');
+  
+  try {
+    const exists = fs.existsSync(publicPath);
+    let files = [];
+    let indexExists = false;
+    
+    if (exists) {
+      files = fs.readdirSync(publicPath);
+      indexExists = fs.existsSync(path.join(publicPath, 'index.html'));
+    }
+    
+    res.json({
+      status: 'OK',
+      publicPath,
+      directoryExists: exists,
+      indexHtmlExists: indexExists,
+      files: files,
+      environment: process.env.NODE_ENV,
+      port: PORT
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message,
+      publicPath,
+      environment: process.env.NODE_ENV
+    });
+  }
+});
+
 // Serve React app for all non-API routes (production only)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
-  app.use(express.static(path.join(__dirname, 'public')));
+  const publicPath = path.join(__dirname, 'public');
   
+  console.log(`🎯 Setting up static file serving from: ${publicPath}`);
+  
+  // Check if public directory exists
+  const fs = require('fs');
+  if (fs.existsSync(publicPath)) {
+    console.log('✅ Public directory exists');
+    const files = fs.readdirSync(publicPath);
+    console.log('📁 Files in public directory:', files);
+  } else {
+    console.error('❌ Public directory does not exist!');
+  }
+  
+  // Serve static files with proper headers
+  app.use(express.static(publicPath, {
+    maxAge: '1d',
+    etag: false
+  }));
+  
+  // Handle React Router - serve index.html for all non-API routes
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(publicPath, 'index.html');
+    console.log(`🔍 Serving index.html for route: ${req.path}`);
+    
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('❌ index.html not found!');
+      res.status(404).send('Frontend not built properly - index.html missing');
+    }
   });
 } else {
   app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Route not found' });
+    res.status(404).json({ error: 'Route not found - development mode' });
   });
 }
 

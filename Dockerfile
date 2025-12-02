@@ -31,7 +31,12 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # List build output for debugging
-RUN ls -la build/
+RUN echo "=== Frontend Build Output ===" && \
+    ls -la build/ && \
+    echo "=== Build Directory Contents ===" && \
+    find build/ -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -10 && \
+    echo "=== Checking index.html ===" && \
+    if [ -f build/index.html ]; then echo "✅ index.html exists"; else echo "❌ index.html missing!"; fi
 
 # Backend stage  
 FROM node:18-alpine AS production
@@ -58,8 +63,14 @@ COPY src/backend/ .
 # Copy built frontend from previous stage
 COPY --from=frontend-build /app/build ./public
 
-# Verify frontend files were copied
-RUN ls -la public/
+# Verify frontend files were copied with detailed check
+RUN echo "=== Backend: Verifying Frontend Files ===" && \
+    ls -la public/ && \
+    echo "=== Checking critical files ===" && \
+    if [ -f public/index.html ]; then echo "✅ index.html copied successfully"; else echo "❌ index.html NOT found in public!"; fi && \
+    if [ -d public/static ]; then echo "✅ static directory exists"; else echo "⚠️ static directory missing"; fi && \
+    echo "=== Frontend file count ===" && \
+    find public/ -type f | wc -l
 
 # Create necessary directories with proper permissions
 RUN mkdir -p uploads data logs
