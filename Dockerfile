@@ -3,15 +3,29 @@ FROM node:18-alpine AS frontend-build
 
 WORKDIR /app
 
-# Copy frontend package files
-COPY src/frontend/package.json ./
+# Copy frontend package files and package-lock.json if it exists
+COPY src/frontend/package*.json ./
 
-# Clear npm cache and install dependencies without lock file to avoid conflicts
+# Clear npm cache and use a more stable approach
 RUN npm cache clean --force
-RUN npm install --legacy-peer-deps --no-package-lock
+
+# Use npm ci if package-lock exists, otherwise install with specific fixes
+RUN if [ -f package-lock.json ]; then \
+      npm ci --legacy-peer-deps; \
+    else \
+      npm install --legacy-peer-deps; \
+    fi
+
+# Fix the ajv/ajv-keywords compatibility issue specifically
+RUN npm install ajv@^8.12.0 ajv-keywords@^5.1.0 --legacy-peer-deps --save-dev
 
 # Copy frontend source
 COPY src/frontend/ .
+
+# Set environment variables to reduce build issues
+ENV GENERATE_SOURCEMAP=false
+ENV CI=false
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Build the React app for production
 RUN npm run build
