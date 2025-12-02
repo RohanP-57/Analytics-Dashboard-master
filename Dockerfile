@@ -41,8 +41,8 @@ RUN mkdir -p uploads data && chmod 755 uploads data
 # Set environment variables
 ENV NODE_ENV=production
 
-# Expose port (Railway will map this to PORT environment variable)
-EXPOSE 5000
+# Expose port (Railway will use PORT environment variable)
+EXPOSE 8080
 
 # Health check to ensure the app is running
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
