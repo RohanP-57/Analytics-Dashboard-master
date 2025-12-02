@@ -16,7 +16,8 @@ const ImageWithFallback = ({ src, alt, className }) => {
     if (originalSrc.startsWith('http')) {
       const encodedUrl = encodeURIComponent(originalSrc);
       // Use the API base URL from environment or default to current origin
-      const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const apiBaseUrl = process.env.REACT_APP_API_URL || 
+        (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000');
       const proxyUrl = `${apiBaseUrl}/api/image-proxy?url=${encodedUrl}`;
       console.log('🔍 TableView Image URL Debug:');
       console.log('  Original URL:', originalSrc);

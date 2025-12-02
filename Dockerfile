@@ -6,8 +6,9 @@ WORKDIR /app
 # Copy frontend package files
 COPY src/frontend/package.json ./
 
-# Install frontend dependencies (use npm install to handle version conflicts)
-RUN npm install --omit=dev
+# Clear npm cache and install dependencies without lock file to avoid conflicts
+RUN npm cache clean --force
+RUN npm install --legacy-peer-deps --no-package-lock
 
 # Copy frontend source
 COPY src/frontend/ .
@@ -15,19 +16,27 @@ COPY src/frontend/ .
 # Build the React app for production
 RUN npm run build
 
-# Backend stage
-FROM node:18-alpine AS backend
+# List build output for debugging
+RUN ls -la build/
 
-# Install build dependencies for native modules like sqlite3
-RUN apk add --no-cache python3 make g++
+# Backend stage  
+FROM node:18-alpine AS production
+
+# Install system dependencies for native modules
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    sqlite \
+    curl
 
 WORKDIR /app
 
 # Copy backend package files
 COPY src/backend/package*.json ./
 
-# Install backend dependencies
-RUN npm install --production
+# Install backend dependencies with verbose logging
+RUN npm install --production --verbose
 
 # Copy backend source files
 COPY src/backend/ .
@@ -35,18 +44,31 @@ COPY src/backend/ .
 # Copy built frontend from previous stage
 COPY --from=frontend-build /app/build ./public
 
+# Verify frontend files were copied
+RUN ls -la public/
+
 # Create necessary directories with proper permissions
-RUN mkdir -p uploads data && chmod 755 uploads data
+RUN mkdir -p uploads data logs
+RUN chmod 755 uploads data logs
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=8080
 
-# Expose port (Railway will use PORT environment variable)
+# Expose port (Railway uses 8080)
 EXPOSE 8080
 
-# Health check to ensure the app is running
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 5000) + '/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+# Add a simple health check script
+RUN echo '#!/bin/sh\ncurl -f http://localhost:$PORT/api/health || exit 1' > /app/healthcheck.sh
+RUN chmod +x /app/healthcheck.sh
 
-# Start the application
-CMD ["node", "server.js"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD /app/healthcheck.sh
+
+# Copy and set up startup script
+COPY start.sh ./
+RUN chmod +x start.sh
+
+# Start the application with Railway-optimized startup
+CMD ["./start.sh"]

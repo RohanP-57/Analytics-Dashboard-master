@@ -13,7 +13,7 @@ const videoLinksRoutes = require('./routes/videoLinks');
 const sitesRoutes = require('./routes/sites');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -273,7 +273,28 @@ app.use((error, req, res, next) => {
   res.status(error.status || 500).json({ error: error.message || 'Internal Server Error' });
 });
 
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+// Start the server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Analytics Dashboard API ready`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Railway URL: ${process.env.RAILWAY_STATIC_URL || 'Not set'}`);
+  
+  if (process.env.NODE_ENV === 'production') {
+    const path = require('path');
+    console.log(`🎯 Frontend served from: ${path.join(__dirname, 'public')}`);
+  }
+  
   console.log('Ready to receive real violation data via /api/upload endpoints.');
+});
+
+// Graceful shutdown for Railway
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully');
+  process.exit(0);
 });
