@@ -92,22 +92,24 @@ const Login = () => {
   return (
     <>
       {/* Video Background - Full Screen with 20% opacity */}
-      <div className="fixed top-0 left-0 w-full h-full z-0 opacity-80">
-        <iframe
-          src="https://player.cloudinary.com/embed/?cloud_name=dskglf2tn&public_id=dash_qusuhb&profile=cld-default&autoplay=true&loop=true&muted=true&controls=false"
-          width="100%"
-          height="100%"
-          style={{
-            border: 'none',
-            minWidth: '100%',
-            minHeight: '100%',
-            objectFit: 'cover'
-          }}
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          allowFullScreen
-          frameBorder="0"
-        ></iframe>
-      </div>
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0 opacity-80"
+        style={{
+          minWidth: '100%',
+          minHeight: '100%',
+          width: 'auto',
+          height: 'auto',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        <source src="https://res.cloudinary.com/dskglf2tn/video/upload/v1763585255/dash_qusuhb.mp4" type="video/mp4" />
+      </video>
 
       {/* Full screen dark overlay */}
       <div className="fixed inset-0 bg-black/60 z-10"></div>
