@@ -35,6 +35,9 @@ COPY --from=frontend-build /app/build ./public
 # Copy video file from frontend public folder to backend public folder
 COPY --from=frontend-build /app/public/login_video.mp4 ./public/login_video.mp4
 
+# Verify video file was copied correctly
+RUN ls -la ./public/login_video.mp4 && echo "Video file size:" && du -h ./public/login_video.mp4
+
 # Create directories
 RUN mkdir -p uploads data logs
 
