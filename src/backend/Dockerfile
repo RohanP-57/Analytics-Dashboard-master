@@ -1,34 +1,21 @@
 FROM node:18-alpine
 
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
-
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy backend package files first for better caching
+COPY src/backend/package*.json ./
 
-# Install only production dependencies and rebuild native modules
-RUN npm ci --only=production && npm rebuild && npm cache clean --force
+# Install dependencies
+RUN npm install --production
 
-# Copy only necessary source files
-COPY server.js ./
-COPY routes/ ./routes/
-COPY utils/ ./utils/
-COPY models/ ./models/
-COPY middleware/ ./middleware/
-COPY validations/ ./validations/
+# Copy backend source files
+COPY src/backend/ .
 
 # Create necessary directories
 RUN mkdir -p uploads data
 
-# Remove build dependencies to reduce image size
-RUN apk del python3 make g++
-
-# Set proper permissions
-RUN chown -R node:node /app
-USER node
-
+# Expose port (Railway will map this to PORT environment variable)
 EXPOSE 5000
 
+# Start the application
 CMD ["node", "server.js"]
