@@ -91,7 +91,7 @@ const Login = () => {
 
   return (
     <>
-      {/* Local Video Background - CSP Compliant */}
+      {/* Cloudinary Video Background - CSP Compliant */}
       <video
         autoPlay
         loop
@@ -108,32 +108,54 @@ const Login = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)'
         }}
-        onLoadStart={() => console.log('✅ Local video loading started')}
-        onLoadedMetadata={() => console.log('✅ Video metadata loaded')}
-        onCanPlay={() => console.log('✅ Local video can play')}
-        onPlay={() => console.log('✅ Video started playing')}
+        onLoadStart={() => console.log('✅ Cloudinary video loading started')}
+        onLoadedMetadata={() => console.log('✅ Cloudinary video metadata loaded')}
+        onCanPlay={() => console.log('✅ Cloudinary video can play')}
+        onPlay={() => console.log('✅ Cloudinary video started playing')}
         onError={(e) => {
-          console.error('❌ Local video error:', e.target.error);
+          console.error('❌ Cloudinary video error:', e.target.error);
           console.log('Video error code:', e.target.error?.code);
           console.log('Video error message:', e.target.error?.message);
           console.log('Video src:', e.target.currentSrc || e.target.src);
-          // Fallback to animated background if video fails
+          // Fallback to iframe player if direct video fails
           e.target.style.display = 'none';
-          const fallback = document.getElementById('video-fallback');
-          if (fallback) {
-            fallback.style.display = 'block';
-            console.log('🔄 Switched to fallback background');
+          const iframe = document.getElementById('cloudinary-iframe');
+          if (iframe) {
+            iframe.style.display = 'block';
+            console.log('🔄 Switched to Cloudinary iframe player');
           }
         }}
-        onStalled={() => console.log('⚠️ Video stalled')}
-        onWaiting={() => console.log('⏳ Video waiting for data')}
+        onStalled={() => console.log('⚠️ Cloudinary video stalled')}
+        onWaiting={() => console.log('⏳ Cloudinary video waiting for data')}
       >
-        <source src="/login_video.mp4" type="video/mp4" />
-        <source src="./login_video.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dskglf2tn/video/upload/v1763585255/dash_qusuhb.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dskglf2tn/video/upload/dash_qusuhb.mp4" type="video/mp4" />
       </video>
 
-      {/* Fallback Animated Background */}
-      <div id="video-fallback" className="fixed inset-0 z-0" style={{ display: 'none' }}>
+      {/* Fallback Cloudinary Iframe Player */}
+      <iframe
+        id="cloudinary-iframe"
+        src="https://player.cloudinary.com/embed/?cloud_name=dskglf2tn&public_id=dash_qusuhb&profile=cld-looping"
+        className="fixed top-0 left-0 w-full h-full z-0 opacity-80"
+        style={{
+          minWidth: '100%',
+          minHeight: '100%',
+          border: 'none',
+          display: 'none'
+        }}
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        allowFullScreen
+        frameBorder="0"
+        onLoad={() => console.log('✅ Cloudinary iframe loaded')}
+        onError={() => {
+          console.log('❌ Cloudinary iframe failed, switching to animated background');
+          document.getElementById('cloudinary-iframe').style.display = 'none';
+          document.getElementById('animated-fallback').style.display = 'block';
+        }}
+      ></iframe>
+
+      {/* Final Fallback - Animated Background */}
+      <div id="animated-fallback" className="fixed inset-0 z-0" style={{ display: 'none' }}>
         <div
           className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-[4000ms] ease-in-out"
           style={{

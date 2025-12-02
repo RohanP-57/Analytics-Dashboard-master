@@ -25,8 +25,8 @@ app.use(helmet({
       connectSrc: ["'self'"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'"],
+      mediaSrc: ["'self'", "https://res.cloudinary.com", "https://player.cloudinary.com"], // Allow Cloudinary media
+      frameSrc: ["'self'", "https://player.cloudinary.com"], // Allow Cloudinary player iframe
     },
   },
 }));
