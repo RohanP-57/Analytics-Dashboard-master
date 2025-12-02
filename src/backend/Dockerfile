@@ -4,10 +4,10 @@ FROM node:18-alpine AS frontend-build
 WORKDIR /app/frontend
 
 # Copy frontend package files
-COPY src/frontend/package*.json ./
+COPY src/frontend/package.json ./
 
-# Install frontend dependencies
-RUN npm ci --only=production
+# Clear npm cache and install dependencies fresh (without lock file to avoid version conflicts)
+RUN npm cache clean --force && npm install --omit=dev --no-package-lock
 
 # Copy frontend source
 COPY src/frontend/ .
