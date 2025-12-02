@@ -32,6 +32,9 @@ RUN npm install --production
 # Copy built frontend from previous stage
 COPY --from=frontend-build /app/build ./public
 
+# Copy video file from frontend public folder to backend public folder
+COPY --from=frontend-build /app/public/login_video.mp4 ./public/login_video.mp4
+
 # Create directories
 RUN mkdir -p uploads data logs
 
