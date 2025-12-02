@@ -29,11 +29,12 @@ COPY src/backend/ .
 # Install backend dependencies
 RUN npm install --production
 
-# Copy built frontend from previous stage
-COPY --from=frontend-build /app/build ./public
+# Create directories first
+RUN mkdir -p uploads data logs public
 
-# Create directories
-RUN mkdir -p uploads data logs
+# Remove any existing public file/directory and copy built frontend
+RUN rm -rf ./public
+COPY --from=frontend-build /app/build ./public
 
 # Set environment
 ENV NODE_ENV=production
