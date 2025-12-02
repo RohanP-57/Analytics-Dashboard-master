@@ -91,28 +91,40 @@ const Login = () => {
 
   return (
     <>
-      {/* Video Background - Full Screen with 20% opacity */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="fixed top-0 left-0 w-full h-full object-cover z-0 opacity-80"
-        style={{
-          minWidth: '100%',
-          minHeight: '100%',
-          width: 'auto',
-          height: 'auto',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)'
-        }}
-      >
-        <source src="https://res.cloudinary.com/dskglf2tn/video/upload/v1763585255/dash_qusuhb.mp4" type="video/mp4" />
-      </video>
+      {/* Video Background Container */}
+      <div className="fixed inset-0 z-0">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            minWidth: '100%',
+            minHeight: '100%'
+          }}
+          onLoadStart={() => console.log('Video loading started')}
+          onCanPlay={() => console.log('Video can play')}
+          onError={(e) => {
+            console.error('Video error:', e);
+            console.log('Trying to reload video...');
+            e.target.load();
+          }}
+        >
+          <source src="https://res.cloudinary.com/dskglf2tn/video/upload/v1763585255/dash_qusuhb.mp4" type="video/mp4" />
+          <source src="https://res.cloudinary.com/dskglf2tn/video/upload/dash_qusuhb.mp4" type="video/mp4" />
+          {/* Fallback for browsers that don't support video */}
+          <div className="w-full h-full bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800"></div>
+        </video>
+        
+        {/* Video Overlay for opacity effect */}
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
 
-      {/* Full screen dark overlay */}
-      <div className="fixed inset-0 bg-black/60 z-10"></div>
+      {/* Content Overlay */}
+      <div className="fixed inset-0 bg-black/40 z-10"></div>
 
       {/* Powered By Card - Bottom Right */}
       <div className="fixed bottom-0 right-1 z-30">
