@@ -97,6 +97,7 @@ const Login = () => {
         loop
         muted
         playsInline
+        preload="metadata"
         className="fixed top-0 left-0 w-full h-full object-cover z-0 opacity-80"
         style={{
           minWidth: '100%',
@@ -107,17 +108,28 @@ const Login = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)'
         }}
-        onLoadStart={() => console.log('Local video loading started')}
-        onCanPlay={() => console.log('Local video can play')}
+        onLoadStart={() => console.log('✅ Local video loading started')}
+        onLoadedMetadata={() => console.log('✅ Video metadata loaded')}
+        onCanPlay={() => console.log('✅ Local video can play')}
+        onPlay={() => console.log('✅ Video started playing')}
         onError={(e) => {
-          console.error('Local video error:', e);
+          console.error('❌ Local video error:', e.target.error);
+          console.log('Video error code:', e.target.error?.code);
+          console.log('Video error message:', e.target.error?.message);
+          console.log('Video src:', e.target.currentSrc || e.target.src);
           // Fallback to animated background if video fails
           e.target.style.display = 'none';
           const fallback = document.getElementById('video-fallback');
-          if (fallback) fallback.style.display = 'block';
+          if (fallback) {
+            fallback.style.display = 'block';
+            console.log('🔄 Switched to fallback background');
+          }
         }}
+        onStalled={() => console.log('⚠️ Video stalled')}
+        onWaiting={() => console.log('⏳ Video waiting for data')}
       >
         <source src="/login_video.mp4" type="video/mp4" />
+        <source src="./login_video.mp4" type="video/mp4" />
       </video>
 
       {/* Fallback Animated Background */}
