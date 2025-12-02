@@ -25,7 +25,7 @@ app.use(helmet({
       connectSrc: ["'self'"],
       fontSrc: ["'self'", "https:", "data:"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "https://res.cloudinary.com"],
+      mediaSrc: ["'self'"],
       frameSrc: ["'self'"],
     },
   },
@@ -36,11 +36,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use('/uploads', express.static('uploads'));
-
-// Serve static files from React build (for production)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('public'));
-}
 
 app.use('/api/upload', uploadRoutes);
 app.use('/api/violations', violationsRoutes);
@@ -70,27 +65,13 @@ app.get('/api/image-proxy', async (req, res) => {
 
     // For Google Drive URLs, ensure proper format
     if (url.includes('drive.google.com')) {
-      // Extract file ID from various Google Drive URL formats
-      let fileId = null;
-      const patterns = [
-        /\/file\/d\/([a-zA-Z0-9_-]+)\//, // sharing URL format
-        /id=([a-zA-Z0-9_-]+)/, // thumbnail/uc format
-        /\/d\/([a-zA-Z0-9_-]+)/ // direct format
-      ];
-
-      for (const pattern of patterns) {
-        const match = url.match(pattern);
-        if (match) {
-          fileId = match[1];
-          break;
-        }
-      }
-
-      if (fileId) {
-        // Try multiple Google Drive formats in order of reliability
-        // First try: Google User Content (most reliable for public images)
-        url = `https://lh3.googleusercontent.com/d/${fileId}=w1000-h1000`;
-        console.log('Converted to Google User Content format:', url);
+      // Use the same processing logic as imageUtils for consistency
+      const { processImageUrl } = require('./utils/imageUtils');
+      const processedUrl = processImageUrl(url);
+      
+      if (processedUrl !== url) {
+        url = processedUrl;
+        console.log('Image proxy: Using processed Google Drive URL:', url);
       }
     }
 
@@ -184,9 +165,44 @@ app.get('/api/image-proxy', async (req, res) => {
           }
         }
 
+        // For 500 errors, try one more fallback format
+        if (response.status === 500 && fileId) {
+          console.log('Google Drive returned 500 error, trying final fallback...');
+          try {
+            const finalFallbackUrl = `https://lh3.googleusercontent.com/d/${fileId}=w800-h600`;
+            const finalResponse = await fetch(finalFallbackUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'image/*,*/*;q=0.8'
+              },
+              signal: controller.signal
+            });
+            
+            if (finalResponse.ok) {
+              const finalContentType = finalResponse.headers.get('content-type');
+              if (finalContentType && finalContentType.startsWith('image/')) {
+                console.log(`Final fallback successful: ${finalFallbackUrl}`);
+                res.set({
+                  'Content-Type': finalContentType,
+                  'Cache-Control': 'public, max-age=3600',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Methods': 'GET',
+                  'Access-Control-Allow-Headers': 'Content-Type'
+                });
+                return finalResponse.body.pipe(res);
+              }
+            }
+          } catch (finalError) {
+            console.log('Final fallback also failed:', finalError.message);
+          }
+        }
+
         return res.status(403).json({
           error: 'Google Drive access denied',
-          suggestion: 'Image may be private or require authentication'
+          suggestion: 'This specific Google Drive file may have server-side issues. Try re-uploading the image to Google Drive with a new file ID.',
+          originalUrl: req.query.url,
+          fileId: fileId,
+          googleDriveStatus: response.status
         });
       }
 
@@ -238,17 +254,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Serve React app for all non-API routes (production only)
-if (process.env.NODE_ENV === 'production') {
-  const path = require('path');
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
-} else {
-  app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-  });
-}
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
 
 app.use((error, req, res, next) => {
   console.error('Error:', error);

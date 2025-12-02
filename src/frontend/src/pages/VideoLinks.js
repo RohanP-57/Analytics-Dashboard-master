@@ -72,9 +72,9 @@ const VideoLinks = () => {
 
   const filteredLinks = videoLinks.filter(link => {
     const matchesSearch = link.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (link.description && link.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      (link.description && link.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSite = !filterSite || link.site_id === filterSite;
-    
+
     return matchesSearch && matchesSite;
   });
 
@@ -137,7 +137,7 @@ const VideoLinks = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -242,11 +242,6 @@ const VideoLinks = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Video Links</h1>
-          <p className="text-gray-600">
-            {user?.role === 'admin' 
-              ? 'Manage training videos and educational content' 
-              : 'Browse training videos and educational content'}
-          </p>
         </div>
         {user?.role === 'admin' && (
           <button

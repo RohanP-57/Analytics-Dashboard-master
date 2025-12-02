@@ -81,6 +81,20 @@ const Features = () => {
     }
   };
 
+  const handleDeleteFeature = async (featureName, displayName) => {
+    if (window.confirm(`Are you sure you want to delete the feature "${displayName}"? This action cannot be undone.`)) {
+      try {
+        await featuresAPI.deleteFeature(featureName);
+        toast.success('Feature deleted successfully');
+        fetchFeatures();
+        fetchFeatureStats();
+      } catch (error) {
+        console.error('Error deleting feature:', error);
+        toast.error('Failed to delete feature');
+      }
+    }
+  };
+
   const filteredFeatures = features.filter(feature => {
     return feature.display_name.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -156,6 +170,18 @@ const Features = () => {
                       {feature.display_name}
                     </h3>
                   </div>
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteFeature(feature.name, feature.display_name);
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm p-1 rounded hover:bg-red-50"
+                      title="Delete feature"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
 
                 {feature.description && (

@@ -18,7 +18,15 @@ class ViolationModel {
     );
     
     if (existingReport) {
-      throw new Error(`Report for drone ${value.drone_id} on ${value.date} already exists`);
+      console.log(`Report for drone ${value.drone_id} on ${value.date} already exists. Deleting existing data to allow re-upload.`);
+      
+      // Delete existing violations for this report
+      await database.run('DELETE FROM violations WHERE report_id = ?', [existingReport.report_id]);
+      
+      // Delete existing report
+      await database.run('DELETE FROM reports WHERE report_id = ?', [existingReport.report_id]);
+      
+      console.log(`Existing report ${existingReport.report_id} and its violations have been deleted.`);
     }
 
     const reportId = `${value.drone_id}_${value.date}_${Date.now()}`;
@@ -170,7 +178,7 @@ class ViolationModel {
   async getAnalytics() {
     try {
       const totalViolationsResult = await database.get('SELECT COUNT(*) as total FROM violations');
-      const totalViolations = totalViolationsResult ? totalViolationsResult.total : 0;
+      const totalViolations = totalViolationsResult.total;
       
       const typeDistribution = await database.all(`
         SELECT type as name, COUNT(*) as value 
@@ -228,35 +236,20 @@ class ViolationModel {
 
       return {
         kpis: {
-          total_violations: totalViolations || 0,
-          unique_drones: uniqueDrones ? uniqueDrones.count : 0,
-          unique_locations: uniqueLocations ? uniqueLocations.count : 0,
-          violation_types: uniqueTypes ? uniqueTypes.count : 0
+          total_violations: totalViolations,
+          unique_drones: uniqueDrones.count,
+          unique_locations: uniqueLocations.count,
+          violation_types: uniqueTypes.count
         },
         charts: {
-          type_distribution: typeDistribution || [],
-          time_series: timeSeriesData || [],
-          drone_performance: dronePerformance || [],
-          location_breakdown: locationStats || []
+          type_distribution: typeDistribution,
+          time_series: timeSeriesData,
+          drone_performance: dronePerformance,
+          location_breakdown: locationStats
         }
       };
     } catch (err) {
-      console.error('Analytics error:', err);
-      // Return default empty analytics structure if database query fails
-      return {
-        kpis: {
-          total_violations: 0,
-          unique_drones: 0,
-          unique_locations: 0,
-          violation_types: 0
-        },
-        charts: {
-          type_distribution: [],
-          time_series: [],
-          drone_performance: [],
-          location_breakdown: []
-        }
-      };
+      throw new Error(`Database error: ${err.message}`);
     }
   }
 
@@ -311,7 +304,7 @@ class ViolationModel {
     }
   }
 
-  async resetAllData() {
+  async resetAllData(keepFeatures = true) {
     try {
       // Get counts before deletion for reporting
       const violationsCount = await database.get('SELECT COUNT(*) as total FROM violations');
@@ -323,36 +316,43 @@ class ViolationModel {
       // Delete all reports
       await database.run('DELETE FROM reports');
       
-      // Reset the features table to only include default features with zero violation counts
-      await database.run('DELETE FROM features');
-      
-      // Re-initialize default features
-      const defaultFeatures = [
-        'ppe_kit_detection',
-        'crowding_of_people', 
-        'crowding_of_vehicles',
-        'rest_shelter_lighting',
-        'stagnant_water',
-        'fire_smoke',
-        'loose_boulder',
-        'red_flag'
-      ];
+      if (!keepFeatures) {
+        // Delete ALL features including defaults
+        await database.run('DELETE FROM features');
+        console.log('All features deleted (including defaults)');
+      } else {
+        // Current behavior - reset and re-add defaults
+        await database.run('DELETE FROM features');
+        
+        // Re-initialize default features
+        const defaultFeatures = [
+          'ppe_kit_detection',
+          'crowding_of_people', 
+          'crowding_of_vehicles',
+          'rest_shelter_lighting',
+          'stagnant_water',
+          'fire_smoke',
+          'loose_boulder',
+          'red_flag'
+        ];
 
-      const { formatFeatureName } = require('../utils/featureSync');
-      
-      for (const featureName of defaultFeatures) {
-        const displayName = formatFeatureName(featureName);
-        await database.run(
-          'INSERT INTO features (name, display_name) VALUES (?, ?)',
-          [featureName, displayName]
-        );
+        const { formatFeatureName } = require('../utils/featureSync');
+        
+        for (const featureName of defaultFeatures) {
+          const displayName = formatFeatureName(featureName);
+          await database.run(
+            'INSERT INTO features (name, display_name) VALUES (?, ?)',
+            [featureName, displayName]
+          );
+        }
       }
       
       console.log('All violations and reports data has been reset');
       
       return {
         violations_deleted: violationsCount.total,
-        reports_deleted: reportsCount.total
+        reports_deleted: reportsCount.total,
+        features_reset: keepFeatures ? 'defaults_restored' : 'all_deleted'
       };
     } catch (err) {
       throw new Error(`Database error during reset: ${err.message}`);

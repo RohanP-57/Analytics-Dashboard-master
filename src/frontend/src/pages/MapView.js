@@ -6,24 +6,28 @@ import toast from 'react-hot-toast';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Simple image component that works with Google Drive
+// Simple image component that works with Google Drive through backend proxy
 const ImageWithFallback = ({ src, alt, className }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // Convert Google Drive URL to direct image URL
+  // Use backend image proxy for all external images, especially Google Drive
   const getImageUrl = (originalSrc) => {
     if (!originalSrc) return '';
     
-    // For Google Drive URLs, convert to lh3.googleusercontent.com format
-    if (originalSrc.includes('drive.google.com')) {
-      const fileIdMatch = originalSrc.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (fileIdMatch) {
-        const fileId = fileIdMatch[1];
-        const directUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
-        console.log('Google Drive URL converted:', originalSrc, '->', directUrl);
-        return directUrl;
-      }
+    // For external URLs (including Google Drive), use the backend image proxy
+    if (originalSrc.startsWith('http')) {
+      const encodedUrl = encodeURIComponent(originalSrc);
+      // Use the API base URL from environment or default to current origin
+      const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const proxyUrl = `${apiBaseUrl}/api/image-proxy?url=${encodedUrl}`;
+      console.log('🔍 Frontend Image URL Debug:');
+      console.log('  Original URL:', originalSrc);
+      console.log('  API Base URL:', apiBaseUrl);
+      console.log('  Encoded URL:', encodedUrl);
+      console.log('  Final Proxy URL:', proxyUrl);
+      console.log('  Proxy URL Length:', proxyUrl.length);
+      return proxyUrl;
     }
     
     return originalSrc;
@@ -37,9 +41,33 @@ const ImageWithFallback = ({ src, alt, className }) => {
     setHasError(false);
   };
 
-  const handleError = (e) => {
+  const handleError = async (e) => {
     console.error('Image failed to load:', imageUrl);
+    console.error('Original URL:', src);
     console.error('Error details:', e);
+    console.error('Error type:', e.type);
+    console.error('Error target:', e.target);
+    
+    // Try to get more details about the error from the backend
+    if (imageUrl.includes('/api/image-proxy')) {
+      try {
+        console.log('Testing backend proxy response...');
+        const response = await fetch(imageUrl);
+        console.log('Backend response status:', response.status);
+        console.log('Backend response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Backend error details:', errorData);
+        } else {
+          console.log('Backend proxy returned OK, but image element failed to load');
+          console.log('This might be a CORS or content-type issue');
+        }
+      } catch (fetchError) {
+        console.error('Could not fetch error details:', fetchError);
+      }
+    }
+    
     setIsLoading(false);
     setHasError(true);
   };
@@ -60,6 +88,12 @@ const ImageWithFallback = ({ src, alt, className }) => {
           <div className="text-xs text-gray-400 mb-2">
             Failed URL: {imageUrl}
           </div>
+          <div className="text-xs text-gray-400 mb-2">
+            Original: {src}
+          </div>
+          <div className="text-xs text-red-500 mb-2">
+            💡 Tip: Ensure Google Drive file is publicly accessible
+          </div>
           <a 
             href={src} 
             target="_blank" 
@@ -68,6 +102,16 @@ const ImageWithFallback = ({ src, alt, className }) => {
           >
             View original
           </a>
+          <button
+            onClick={() => {
+              console.log('Retrying image load...');
+              setHasError(false);
+              setIsLoading(true);
+            }}
+            className="text-blue-600 hover:underline text-xs mt-1 block"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -86,7 +130,9 @@ const ImageWithFallback = ({ src, alt, className }) => {
         className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         onLoad={handleLoad}
         onError={handleError}
-        loading="lazy"
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
+        style={{ maxWidth: '100%', height: 'auto' }}
       />
     </div>
   );

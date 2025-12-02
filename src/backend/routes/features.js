@@ -156,6 +156,35 @@ router.post('/sync', async (req, res) => {
   }
 });
 
+// Delete a specific feature
+router.delete('/:featureName', async (req, res) => {
+  try {
+    const { featureName } = req.params;
+    
+    // Delete the specific feature
+    const result = await database.run('DELETE FROM features WHERE name = ?', [featureName]);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Feature '${featureName}' deleted successfully`,
+      data: { deleted_feature: featureName }
+    });
+  } catch (error) {
+    console.error('Error deleting feature:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete feature'
+    });
+  }
+});
+
 // Get violations by specific feature
 router.get('/:featureName/violations', async (req, res) => {
   try {

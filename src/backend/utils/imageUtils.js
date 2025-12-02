@@ -10,28 +10,42 @@
 const convertGoogleDriveUrl = (url) => {
   if (!url) return url;
   
-  // Check if it's a Google Drive URL
-  const driveRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-  const match = url.match(driveRegex);
+  // Extract file ID from various Google Drive URL formats
+  let fileId = null;
   
-  if (match) {
-    const fileId = match[1];
-    // Use thumbnail API which works better for web embedding
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h300`;
-  }
+  const patterns = [
+    /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/, // Standard sharing URL
+    /https:\/\/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/, // Open URL format
+    /https:\/\/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/, // UC format
+    /https:\/\/drive\.google\.com\/thumbnail\?.*id=([a-zA-Z0-9_-]+)/, // Existing thumbnail
+    /id=([a-zA-Z0-9_-]+)/, // Generic id parameter
+    /\/d\/([a-zA-Z0-9_-]+)/ // Direct format
+  ];
   
-  // Check if it's already a direct Google Drive URL
-  if (url.includes('drive.google.com/uc?export=view')) {
-    // Convert existing uc URLs to thumbnail format
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
-    if (idMatch) {
-      return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w400-h300`;
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      fileId = match[1];
+      break;
     }
-    return url;
   }
   
-  // Check if it's already a thumbnail URL
+  if (fileId) {
+    // If it's already a thumbnail URL, preserve the existing size parameter
+    if (url.includes('drive.google.com/thumbnail')) {
+      console.log(`Google Drive thumbnail URL already in correct format: ${url}`);
+      return url;
+    }
+    
+    // Use thumbnail API which works better for web embedding
+    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w800-h600`;
+    console.log(`Converted Google Drive URL: ${url} -> ${thumbnailUrl}`);
+    return thumbnailUrl;
+  }
+  
+  // If it's already a properly formatted thumbnail URL, return as is
   if (url.includes('drive.google.com/thumbnail')) {
+    console.log(`Preserving existing Google Drive thumbnail URL: ${url}`);
     return url;
   }
   

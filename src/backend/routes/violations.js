@@ -138,14 +138,15 @@ router.get('/:id', async (req, res) => {
 // Reset all violations data (clear test data)
 router.delete('/reset', async (req, res) => {
   try {
-    const result = await ViolationModel.resetAllData();
+    const keepFeatures = req.query.keep_features !== 'false';
+    const result = await ViolationModel.resetAllData(keepFeatures);
+    
     res.json({
       success: true,
-      message: 'All violations data has been reset successfully',
-      data: {
-        violations_deleted: result.violations_deleted,
-        reports_deleted: result.reports_deleted
-      }
+      message: keepFeatures 
+        ? 'All violations data has been reset successfully' 
+        : 'All violations and features data has been reset successfully',
+      data: result
     });
   } catch (error) {
     console.error('Reset violations error:', error);

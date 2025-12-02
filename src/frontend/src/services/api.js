@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -22,6 +22,7 @@ export const featuresAPI = {
   getFeatureStats: () => api.get('/features/stats'),
   getFeatureViolations: (featureName, params = {}) => api.get(`/features/${featureName}/violations`, { params }),
   createFeature: (featureData) => api.post('/features', featureData),
+  deleteFeature: (featureName) => api.delete(`/features/${featureName}`),
 };
 
 export const violationsAPI = {

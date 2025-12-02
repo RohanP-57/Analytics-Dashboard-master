@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get(`/api/auth/profile`);
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/profile`);
           setUser(response.data.user);
         } catch (error) {
           console.error('Auth check failed:', error);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role = 'user') => {
     try {
-      const response = await axios.post(`/api/auth/login`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
         email,
         password,
         role
@@ -70,8 +70,9 @@ export const AuthProvider = ({ children }) => {
   const signup = async (username, email, password) => {
     try {
       console.log('Attempting signup with:', { username, email, password: '***' });
+      console.log('API URL:', process.env.REACT_APP_API_URL);
       
-      const response = await axios.post(`/api/auth/signup`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
         username,
         email,
         password
@@ -99,7 +100,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (userData) => {
     try {
-      const response = await axios.put(`/api/auth/profile`, userData);
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/auth/profile`, userData);
       setUser(response.data.user);
       toast.success('Profile updated successfully!');
       return { success: true };
