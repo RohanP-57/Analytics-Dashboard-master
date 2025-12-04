@@ -38,7 +38,6 @@ class ViolationModel {
       );
 
       for (const violation of value.violations) {
-        // Check if violation already exists
         const existingViolation = await database.get(
           'SELECT id FROM violations WHERE id = ?',
           [violation.id]
