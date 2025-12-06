@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import './UploadATR.css';
 
 const UploadATR = () => {
