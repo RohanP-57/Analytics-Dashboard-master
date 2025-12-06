@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Upload, Map, Table2, User, LogOut, Settings, Layers, Video, MapPin } from 'lucide-react';
+import { BarChart3, Upload, Map, Table2, User, LogOut, Settings, Layers, Video, MapPin, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
@@ -17,6 +17,7 @@ const Navbar = () => {
     { path: '/features', name: 'Features', icon: Layers },
     { path: '/sites', name: 'Sites', icon: MapPin },
     { path: '/upload', name: 'Upload', icon: Upload, adminOnly: true },
+    { path: '/upload-atr', name: 'Upload ATR', icon: FileText },
     { path: '/video-links', name: 'Video Links', icon: Video },
     { path: '/map', name: 'Map View', icon: Map },
     { path: '/table', name: 'Table View', icon: Table2 },

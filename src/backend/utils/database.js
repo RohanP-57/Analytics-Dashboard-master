@@ -86,6 +86,20 @@ class Database {
       )
     `;
 
+    const createAtrDocumentsTable = `
+      CREATE TABLE IF NOT EXISTS atr_documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        cloudinary_url TEXT NOT NULL,
+        cloudinary_public_id TEXT NOT NULL,
+        department TEXT NOT NULL,
+        uploaded_by INTEGER NOT NULL,
+        file_size INTEGER,
+        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (uploaded_by) REFERENCES user (id)
+      )
+    `;
+
     this.db.serialize(() => {
       this.db.run(createUsersTable, (err) => {
         if (err) {
@@ -142,6 +156,14 @@ class Database {
         } else {
           console.log('Sites table ready');
           this.insertDefaultSites();
+        }
+      });
+
+      this.db.run(createAtrDocumentsTable, (err) => {
+        if (err) {
+          console.error('Error creating atr_documents table:', err.message);
+        } else {
+          console.log('ATR Documents table ready');
         }
       });
     });

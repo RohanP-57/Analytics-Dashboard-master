@@ -15,6 +15,7 @@ import TableView from './pages/TableView';
 import Profile from './pages/Profile';
 import VideoLinks from './pages/VideoLinks';
 import Sites from './pages/Sites';
+import UploadATR from './pages/UploadATR';
 
 function App() {
   return (
@@ -64,6 +65,11 @@ function App() {
               <Route path="/sites" element={
                 <ProtectedRoute>
                   <Sites />
+                </ProtectedRoute>
+              } />
+              <Route path="/upload-atr" element={
+                <ProtectedRoute>
+                  <UploadATR />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
