@@ -19,9 +19,11 @@ const UploadATR = () => {
     try {
       setLoading(true);
       const response = await api.get('/api/atr/list');
-      setDocuments(response.data.documents);
+      const documentsData = response.data?.documents || [];
+      setDocuments(Array.isArray(documentsData) ? documentsData : []);
     } catch (error) {
       console.error('Error fetching documents:', error);
+      setDocuments([]); // Ensure documents is always an array
       toast.error('Failed to load documents');
     } finally {
       setLoading(false);
@@ -184,7 +186,7 @@ const UploadATR = () => {
             <div className="spinner"></div>
             <p>Loading documents...</p>
           </div>
-        ) : documents.length === 0 ? (
+        ) : !Array.isArray(documents) || documents.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📁</div>
             <h3>No ATR documents found</h3>
@@ -204,25 +206,26 @@ const UploadATR = () => {
                 </tr>
               </thead>
               <tbody>
-                {documents.map((doc) => (
-                  <tr key={doc.id}>
+                {documents.filter(doc => doc && doc.id).map((doc) => (
+                  <tr key={doc.id || Math.random()}>
                     <td className="filename-cell">
                       <div className="file-info">
                         <span className="file-icon">📄</span>
-                        <span className="filename">{doc.filename}</span>
+                        <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
                     </td>
                     <td>
-                      <span className="department-badge">{doc.department}</span>
+                      <span className="department-badge">{doc.department || 'N/A'}</span>
                     </td>
-                    <td>{doc.uploaded_by}</td>
-                    <td>{formatDate(doc.upload_date)}</td>
-                    <td>{formatFileSize(doc.file_size)}</td>
+                    <td>{doc.uploaded_by || 'Unknown'}</td>
+                    <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
+                    <td>{doc.file_size ? formatFileSize(doc.file_size) : 'N/A'}</td>
                     <td className="actions-cell">
                       <button
                         onClick={() => handleView(doc.id)}
                         className="action-button view-button"
                         title="View PDF"
+                        disabled={!doc.id}
                       >
                         👁️ View
                       </button>
@@ -231,6 +234,7 @@ const UploadATR = () => {
                           onClick={() => handleDelete(doc.id, doc.filename)}
                           className="action-button delete-button"
                           title="Delete PDF"
+                          disabled={!doc.id}
                         >
                           🗑️ Delete
                         </button>
