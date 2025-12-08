@@ -70,30 +70,6 @@ OPTION 2: MANUAL INSTALLATION
 
    Frontend will run on: http://localhost:3000
 
-🔐 DEFAULT LOGIN CREDENTIALS
-============================
-Admin Account (Full System Access):
-- Username: AEROVANIA MASTER
-- Password: admin123
-- Access: All features + ATR admin controls
-
-Department Users (ATR System):
-- Username: et_department (E&T Department)
-- Username: security_department (Security Department)  
-- Username: operation_department (Operation Department)
-- Username: survey_department (Survey Department)
-- Username: safety_department (Safety Department)
-- Password: (use department username as password)
-- Access: Department-specific ATR document management
-
-Legacy Admin Account:
-- Email: admin@ccl.com
-- Password: admin123
-
-Legacy User Account:
-- Email: user@ccl.com
-- Password: user123
-
 📊 FEATURES
 ===========
 ✅ Real-time violation monitoring
