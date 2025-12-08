@@ -4,6 +4,10 @@ import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
+// Use consistent API URL logic (same as api.js)
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000');
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -31,7 +35,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/profile`);
+          const response = await axios.get(`${API_BASE_URL}/api/auth/profile`);
           setUser(response.data.user);
         } catch (error) {
           console.error('Auth check failed:', error);
@@ -46,7 +50,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role = 'user') => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
         password,
         role
@@ -70,9 +74,9 @@ export const AuthProvider = ({ children }) => {
   const signup = async (username, email, password) => {
     try {
       console.log('Attempting signup with:', { username, email, password: '***' });
-      console.log('API URL:', process.env.REACT_APP_API_URL);
+      console.log('API URL:', API_BASE_URL);
       
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
         username,
         email,
         password
@@ -100,7 +104,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (userData) => {
     try {
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/auth/profile`, userData);
+      const response = await axios.put(`${API_BASE_URL}/api/auth/profile`, userData);
       setUser(response.data.user);
       toast.success('Profile updated successfully!');
       return { success: true };

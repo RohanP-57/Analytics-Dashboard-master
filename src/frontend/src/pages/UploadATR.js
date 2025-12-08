@@ -12,6 +12,15 @@ const UploadATR = () => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
+  const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
+  
+  console.log('🔍 Admin Detection Debug:', {
+    user: user?.username,
+    role: user?.role,
+    userType: user?.userType,
+    isAdmin: isAdmin
+  });
+
   useEffect(() => {
     fetchDocuments();
   }, []);
@@ -20,7 +29,7 @@ const UploadATR = () => {
     if (isAdmin) {
       fetchDocuments();
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartment, isAdmin]);
 
   const fetchDocuments = async () => {
     try {
@@ -40,8 +49,6 @@ const UploadATR = () => {
       setLoading(false);
     }
   };
-
-  const isAdmin = user?.role === 'admin' || user?.userType === 'admin';
   
   const departments = [
     'E&T Department',
@@ -93,20 +100,36 @@ const UploadATR = () => {
   };
 
   const handleFileUpload = async (file) => {
+    console.log('🔍 ATR Frontend Upload Started');
+    console.log('📁 File details:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    });
+    console.log('👤 Current user:', user);
+
     if (file.type !== 'application/pdf') {
+      console.log('❌ Invalid file type:', file.type);
       toast.error('Please select a PDF file');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      console.log('❌ File too large:', file.size, 'bytes');
       toast.error('File size must be less than 10MB');
       return;
     }
 
     try {
       setUploading(true);
+      console.log('📤 Creating FormData...');
+      
       const formData = new FormData();
       formData.append('pdf', file);
+      
+      console.log('📤 FormData created, making API call to /api/atr/upload');
+      console.log('🔑 Auth token present:', !!localStorage.getItem('token'));
 
       const response = await api.post('/api/atr/upload', formData, {
         headers: {
@@ -114,13 +137,21 @@ const UploadATR = () => {
         },
       });
 
+      console.log('✅ Upload successful:', response.data);
       toast.success('ATR document uploaded successfully!');
       fetchDocuments(); // Refresh the list
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error.response?.data?.error || 'Failed to upload document');
+      console.error('❌ Upload error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error headers:', error.response?.headers);
+      
+      const errorMessage = error.response?.data?.error || 'Failed to upload document';
+      console.log('❌ Showing error to user:', errorMessage);
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
+      console.log('🔍 ATR Frontend Upload Finished');
     }
   };
 

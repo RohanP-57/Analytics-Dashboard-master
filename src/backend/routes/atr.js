@@ -44,11 +44,17 @@ const getDepartmentFolder = (department) => {
 // Upload ATR document
 router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res) => {
   try {
+    console.log('🔍 ATR Upload Request Started');
+    console.log('📤 User:', req.user?.username, 'Department:', req.user?.department);
+    console.log('📁 File received:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
+
     if (!req.file) {
+      console.log('❌ No file provided in request');
       return res.status(400).json({ error: 'No PDF file provided' });
     }
 
     if (!req.user.department) {
+      console.log('❌ User has no department assigned');
       return res.status(400).json({ error: 'User department not found' });
     }
 
@@ -56,7 +62,11 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
     const timestamp = Date.now();
     const filename = `${timestamp}_${req.file.originalname}`;
     
+    console.log('📂 Department folder:', departmentFolder);
+    console.log('📄 Generated filename:', filename);
+    
     // Upload to Cloudinary
+    console.log('☁️ Starting Cloudinary upload...');
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
@@ -66,13 +76,19 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
           format: 'pdf'
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.log('❌ Cloudinary upload failed:', error.message);
+            reject(error);
+          } else {
+            console.log('✅ Cloudinary upload successful:', result.secure_url);
+            resolve(result);
+          }
         }
       ).end(req.file.buffer);
     });
 
     // Save to database
+    console.log('💾 Saving to database...');
     const documentData = {
       filename: req.file.originalname,
       cloudinary_url: uploadResult.secure_url,
@@ -83,6 +99,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
     };
 
     const document = await AtrDocument.createDocument(documentData);
+    console.log('✅ Database save successful, document ID:', document.id);
 
     res.status(201).json({
       message: 'ATR document uploaded successfully',
@@ -95,8 +112,11 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       }
     });
 
+    console.log('🎉 ATR Upload completed successfully');
+
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('❌ ATR Upload error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to upload document: ' + error.message });
   }
 });
