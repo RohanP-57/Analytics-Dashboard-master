@@ -38,7 +38,7 @@ const UploadATR = () => {
         ? { department: selectedDepartment } 
         : {};
       
-      const response = await api.get('/api/atr/list', { params });
+      const response = await api.get('/atr/list', { params });
       const documentsData = response.data?.documents || [];
       setDocuments(Array.isArray(documentsData) ? documentsData : []);
     } catch (error) {
@@ -128,10 +128,10 @@ const UploadATR = () => {
       const formData = new FormData();
       formData.append('pdf', file);
       
-      console.log('📤 FormData created, making API call to /api/atr/upload');
+      console.log('📤 FormData created, making API call to /atr/upload');
       console.log('🔑 Auth token present:', !!localStorage.getItem('token'));
 
-      const response = await api.post('/api/atr/upload', formData, {
+      const response = await api.post('/atr/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -157,7 +157,7 @@ const UploadATR = () => {
 
   const handleView = async (documentId) => {
     try {
-      const response = await api.get(`/api/atr/view/${documentId}`);
+      const response = await api.get(`/atr/view/${documentId}`);
       window.open(response.data.url, '_blank');
     } catch (error) {
       console.error('View error:', error);
@@ -171,7 +171,7 @@ const UploadATR = () => {
     }
 
     try {
-      await api.delete(`/api/atr/${documentId}`);
+      await api.delete(`/atr/${documentId}`);
       toast.success('Document deleted successfully');
       fetchDocuments(); // Refresh the list
     } catch (error) {
