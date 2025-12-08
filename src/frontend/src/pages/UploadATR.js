@@ -10,24 +10,60 @@ const UploadATR = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   useEffect(() => {
     fetchDocuments();
   }, []);
 
+  useEffect(() => {
+    if (isAdmin) {
+      fetchDocuments();
+    }
+  }, [selectedDepartment]);
+
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/atr/list');
+      const params = isAdmin && selectedDepartment !== 'all' 
+        ? { department: selectedDepartment } 
+        : {};
+      
+      const response = await api.get('/api/atr/list', { params });
       const documentsData = response.data?.documents || [];
       setDocuments(Array.isArray(documentsData) ? documentsData : []);
     } catch (error) {
       console.error('Error fetching documents:', error);
-      setDocuments([]); // Ensure documents is always an array
+      setDocuments([]);
       toast.error('Failed to load documents');
     } finally {
       setLoading(false);
     }
+  };
+
+  const isAdmin = user?.role === 'admin' || user?.userType === 'admin';
+  
+  const departments = [
+    'E&T Department',
+    'Security Department', 
+    'Operation Department',
+    'Survey Department',
+    'Safety Department'
+  ];
+
+  const filteredDocuments = isAdmin && selectedDepartment !== 'all' 
+    ? documents.filter(doc => doc.department === selectedDepartment)
+    : documents;
+
+  const getDepartmentColor = (department) => {
+    const colors = {
+      'E&T Department': '#3b82f6',
+      'Security Department': '#ef4444', 
+      'Operation Department': '#10b981',
+      'Survey Department': '#f59e0b',
+      'Safety Department': '#8b5cf6'
+    };
+    return colors[department] || '#6b7280';
   };
 
   const handleDrag = (e) => {
@@ -175,10 +211,29 @@ const UploadATR = () => {
       {/* Documents List */}
       <div className="documents-section">
         <div className="documents-header">
-          <h2>ATR Documents</h2>
-          <button onClick={fetchDocuments} className="refresh-button" disabled={loading}>
-            {loading ? '🔄' : '↻'} Refresh
-          </button>
+          <div className="header-left">
+            <h2>ATR Documents</h2>
+            {isAdmin && (
+              <span className="admin-badge">👑 Admin View</span>
+            )}
+          </div>
+          <div className="header-right">
+            {isAdmin && (
+              <select 
+                value={selectedDepartment} 
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="department-filter"
+              >
+                <option value="all">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            )}
+            <button onClick={fetchDocuments} className="refresh-button" disabled={loading}>
+              {loading ? '🔄' : '↻'} Refresh
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -206,7 +261,7 @@ const UploadATR = () => {
                 </tr>
               </thead>
               <tbody>
-                {documents.filter(doc => doc && doc.id).map((doc) => (
+                {filteredDocuments.filter(doc => doc && doc.id).map((doc) => (
                   <tr key={doc.id || Math.random()}>
                     <td className="filename-cell">
                       <div className="file-info">
@@ -215,7 +270,12 @@ const UploadATR = () => {
                       </div>
                     </td>
                     <td>
-                      <span className="department-badge">{doc.department || 'N/A'}</span>
+                      <span 
+                        className="department-badge" 
+                        style={{ backgroundColor: getDepartmentColor(doc.department) }}
+                      >
+                        {doc.department || 'N/A'}
+                      </span>
                     </td>
                     <td>{doc.uploaded_by || 'Unknown'}</td>
                     <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>

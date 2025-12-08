@@ -43,6 +43,22 @@ A comprehensive drone analytics dashboard for mining operations with violation d
 - **Data Validation**: Comprehensive validation of uploaded data
 - **Real-time Processing**: Immediate data processing and visualization
 
+### 📄 **ATR Document Management System**
+- **Department-Based Organization**: Upload ATR (Accident/Incident Report) PDFs organized by department
+- **Admin Enhancement Features**: Comprehensive admin controls with department filtering
+- **Cloudinary Integration**: Secure cloud storage with department-based folder structure
+- **Role-Based Access**: Department isolation for users, cross-department access for admins
+- **Admin Features**:
+  - 👑 Admin badge and visual indicators
+  - 🔍 Department filter dropdown (All Departments, E&T, Security, Operation, Survey, Safety)
+  - 🎨 Color-coded department badges for easy identification
+  - 🔐 Enhanced permissions (view/delete across all departments)
+- **User Features**:
+  - 📤 Drag-and-drop PDF upload to department folders
+  - 👁️ View department-specific documents only
+  - 🗑️ Delete own uploads with confirmation
+  - 🔒 Department isolation and security
+
 ## 🛠 Tech Stack
 
 ### **Frontend**
@@ -68,30 +84,6 @@ A comprehensive drone analytics dashboard for mining operations with violation d
 - **Docker Compose**: Multi-container orchestration
 - **Nginx**: Reverse proxy (production ready)
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Docker and Docker Compose installed
-- Node.js 18+ (for development)
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd Analytics-Dashboard-master
-```
-
-### 2. Start the Application
-```bash
-docker-compose up -d
-```
-
-### 3. Access the Application
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-
-### 4. Default Login
-- **Username**: admin
-- **Password**: admin123
 
 ## 📁 Project Structure
 
@@ -106,7 +98,8 @@ Analytics-Dashboard-master/
 │   │   │   ├── sites.js        # Site management
 │   │   │   ├── videoLinks.js   # Video link management
 │   │   │   ├── violations.js   # Violation data
-│   │   │   └── upload.js       # File upload
+│   │   │   ├── upload.js       # File upload
+│   │   │   └── atr.js          # ATR document management
 │   │   ├── utils/              # Utilities
 │   │   │   ├── database.js     # Database connection
 │   │   │   └── featureSync.js  # Feature synchronization
@@ -167,6 +160,13 @@ Analytics-Dashboard-master/
 ### **Upload**
 - `POST /api/upload/json` - Upload JSON data
 - `POST /api/upload/report` - Upload file
+
+### **ATR Documents**
+- `GET /api/atr/list` - Get ATR documents (filtered by department for users, all for admin)
+- `GET /api/atr/list?department=<dept>` - Filter documents by department (admin only)
+- `POST /api/atr/upload` - Upload ATR PDF document
+- `GET /api/atr/view/:id` - View/download ATR document
+- `DELETE /api/atr/:id` - Delete ATR document (own uploads or admin)
 
 ## 🎯 Key Features Explained
 
@@ -254,79 +254,6 @@ For support and questions:
 - Review the API endpoints
 - Check Docker logs for errors
 - Ensure all containers are running
-
-## 🗄️ Database Schema
-
-### **Sites Table**
-```sql
-CREATE TABLE sites (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
-  description TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### **Features Table**
-```sql
-CREATE TABLE features (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
-  display_name TEXT NOT NULL,
-  description TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  is_active BOOLEAN DEFAULT 1
-);
-```
-
-### **Video Links Table**
-```sql
-CREATE TABLE video_links (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  description TEXT,
-  video_url TEXT NOT NULL,
-  feature_id TEXT,
-  site_id INTEGER,
-  create_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-  update_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (site_id) REFERENCES sites(id),
-  FOREIGN KEY (feature_id) REFERENCES features(name)
-);
-```
-
-### **Violations Table**
-```sql
-CREATE TABLE violations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  type TEXT NOT NULL,
-  location TEXT,
-  drone_id TEXT,
-  date TEXT,
-  timestamp TEXT,
-  confidence REAL,
-  additional_data TEXT
-);
-```
-
-## 🔧 Technical Implementation Details
-
-### **Container Communication**
-- **Frontend Proxy**: Configured to route API calls to backend container
-- **Docker Networking**: Containers communicate via internal Docker network
-- **Port Mapping**: Frontend (3000), Backend (5000) exposed to host
-
-### **Form Validation System**
-- **Client-Side**: Real-time validation with error messages
-- **Server-Side**: Comprehensive input validation and sanitization
-- **Required Fields**: Site and Feature selection mandatory for video links
-- **URL Validation**: Proper URL format checking for video links
-
-### **Role-Based UI Rendering**
-- **Conditional Rendering**: UI elements shown/hidden based on user role
-- **Consistent Messaging**: Different descriptions for admin vs regular users
-- **Security**: Admin-only actions completely hidden from regular users
 
 ## 🔄 Updates & Maintenance
 

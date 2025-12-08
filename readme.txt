@@ -72,11 +72,25 @@ OPTION 2: MANUAL INSTALLATION
 
 🔐 DEFAULT LOGIN CREDENTIALS
 ============================
-Admin Account:
+Admin Account (Full System Access):
+- Username: AEROVANIA MASTER
+- Password: admin123
+- Access: All features + ATR admin controls
+
+Department Users (ATR System):
+- Username: et_department (E&T Department)
+- Username: security_department (Security Department)  
+- Username: operation_department (Operation Department)
+- Username: survey_department (Survey Department)
+- Username: safety_department (Safety Department)
+- Password: (use department username as password)
+- Access: Department-specific ATR document management
+
+Legacy Admin Account:
 - Email: admin@ccl.com
 - Password: admin123
 
-User Account:
+Legacy User Account:
 - Email: user@ccl.com
 - Password: user123
 
@@ -89,6 +103,32 @@ User Account:
 ✅ Automatic feature detection from uploaded data
 ✅ Role-based access control (Admin/User)
 ✅ Responsive design for all devices
+
+📄 ATR DOCUMENT MANAGEMENT SYSTEM
+=================================
+✅ Department-based PDF document organization
+✅ Cloudinary cloud storage integration
+✅ Admin enhancement features with department filtering
+✅ Role-based access control (Department isolation)
+
+🔧 ATR ADMIN FEATURES:
+- 👑 Admin badge and visual indicators
+- 🔍 Department filter dropdown (All Departments + individual departments)
+- 🎨 Color-coded department badges:
+  * E&T Department: Blue
+  * Security Department: Red  
+  * Operation Department: Green
+  * Survey Department: Orange
+  * Safety Department: Purple
+- 🔐 Cross-department access and enhanced delete permissions
+- 📊 View all departments' documents in one interface
+
+👤 ATR USER FEATURES:
+- 📤 Drag-and-drop PDF upload to department folders
+- 👁️ View only department-specific documents
+- 🗑️ Delete own uploads with confirmation
+- 🔒 Department isolation and security
+- 📱 Responsive design for mobile devices
 
 📁 FILE UPLOAD FORMAT
 =====================
