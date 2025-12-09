@@ -36,7 +36,9 @@ const getDepartmentFolder = (department) => {
     'Security Department': 'security-department',
     'Operation Department': 'operation-department',
     'Survey Department': 'survey-department',
-    'Safety Department': 'safety-department'
+    'Safety Department': 'safety-department',
+    'Admin': 'admin',
+    'Super Admin': 'super-admin'
   };
   return departmentMap[department] || 'general';
 };
@@ -53,15 +55,26 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       return res.status(400).json({ error: 'No PDF file provided' });
     }
 
-    if (!req.user.department) {
-      console.log('❌ User has no department assigned');
-      return res.status(400).json({ error: 'User department not found' });
+    // Determine department based on user role
+    let department = req.user.department;
+    
+    // If user is admin/super admin and has no department, use their role as department
+    if (!department) {
+      if (req.user.role === 'admin' || req.user.userType === 'admin') {
+        department = 'Admin';
+      } else if (req.user.username === 'AEROVANIA MASTER' || req.user.role === 'super_admin') {
+        department = 'Super Admin';
+      } else {
+        console.log('❌ User has no department assigned');
+        return res.status(400).json({ error: 'User department not found' });
+      }
     }
 
-    const departmentFolder = getDepartmentFolder(req.user.department);
+    const departmentFolder = getDepartmentFolder(department);
     const timestamp = Date.now();
     const filename = `${timestamp}_${req.file.originalname}`;
 
+    console.log('📂 Department:', department);
     console.log('📂 Department folder:', departmentFolder);
     console.log('📄 Generated filename:', filename);
 
@@ -73,7 +86,9 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
           resource_type: 'raw',
           folder: `atr-documents/${departmentFolder}`,
           public_id: filename.replace('.pdf', ''),
-          format: 'pdf'
+          format: 'pdf',
+          type: 'upload', // Ensure public delivery
+          access_mode: 'public' // Make file publicly accessible
         },
         (error, result) => {
           if (error) {
@@ -93,7 +108,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       filename: req.file.originalname,
       cloudinary_url: uploadResult.secure_url,
       cloudinary_public_id: uploadResult.public_id,
-      department: req.user.department,
+      department: department,
       uploaded_by: req.user.id,
       file_size: req.file.size
     };
