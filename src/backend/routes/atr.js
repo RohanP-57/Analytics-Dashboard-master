@@ -61,10 +61,10 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
     const departmentFolder = getDepartmentFolder(req.user.department);
     const timestamp = Date.now();
     const filename = `${timestamp}_${req.file.originalname}`;
-    
+
     console.log('📂 Department folder:', departmentFolder);
     console.log('📄 Generated filename:', filename);
-    
+
     // Upload to Cloudinary
     console.log('☁️ Starting Cloudinary upload...');
     const uploadResult = await new Promise((resolve, reject) => {
@@ -125,7 +125,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
 router.get('/list', authenticateToken, async (req, res) => {
   try {
     let documents;
-    
+
     // Admin can see all documents, users only see their department's documents
     if (req.user.role === 'admin' || req.user.userType === 'admin') {
       documents = await AtrDocument.getAllDocuments();
@@ -158,31 +158,53 @@ router.get('/list', authenticateToken, async (req, res) => {
 // View/Download ATR document
 router.get('/view/:id', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 ATR View Request - Document ID:', req.params.id);
+    console.log('👤 User:', req.user?.username, 'Department:', req.user?.department);
+
     const document = await AtrDocument.getDocumentById(req.params.id);
-    
+
     if (!document) {
+      console.log('❌ Document not found:', req.params.id);
       return res.status(404).json({ error: 'Document not found' });
     }
 
     // Check if user can access this document
-    const canAccess = req.user.role === 'admin' || 
-                     req.user.userType === 'admin' || 
-                     document.department === req.user.department;
+    const canAccess = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.department === req.user.department;
 
     if (!canAccess) {
+      console.log('❌ Access denied - User department:', req.user.department, 'Document department:', document.department);
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Return the Cloudinary URL for direct access
+    console.log('📄 Document found:', document.filename);
+    console.log('🔗 Cloudinary public_id:', document.cloudinary_public_id);
+
+    // Generate signed URL for secure access (expires in 1 hour)
+    const signedUrl = cloudinary.utils.private_download_url(
+      document.cloudinary_public_id,
+      'pdf',
+      {
+        resource_type: 'raw',
+        expires_at: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hour from now
+      }
+    );
+
+    console.log('✅ Generated signed URL for secure access');
+
+    // Return the signed URL for secure access
     res.json({
       filename: document.filename,
-      url: document.cloudinary_url,
+      url: signedUrl,
       department: document.department,
-      upload_date: document.upload_date
+      upload_date: document.upload_date,
+      expires_in: '1 hour'
     });
 
   } catch (error) {
-    console.error('View document error:', error);
+    console.error('❌ View document error:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to access document: ' + error.message });
   }
 });
@@ -191,15 +213,15 @@ router.get('/view/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const document = await AtrDocument.getDocumentById(req.params.id);
-    
+
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
     }
 
     // Check if user can delete this document
-    const canDelete = req.user.role === 'admin' || 
-                     req.user.userType === 'admin' || 
-                     document.uploaded_by === req.user.id;
+    const canDelete = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
 
     if (!canDelete) {
       return res.status(403).json({ error: 'Permission denied' });
@@ -212,7 +234,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // Delete from database
     const deleted = await AtrDocument.deleteDocument(req.params.id);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Document not found' });
     }
