@@ -182,24 +182,18 @@ router.get('/view/:id', authenticateToken, async (req, res) => {
     console.log('🔗 Cloudinary public_id:', document.cloudinary_public_id);
     console.log('🔗 Cloudinary URL:', document.cloudinary_url);
 
-    // Generate signed URL for secure access (expires in 1 hour)
-    // For raw files, we need to use url() method with sign_url option
-    const signedUrl = cloudinary.url(document.cloudinary_public_id, {
-      resource_type: 'raw',
-      sign_url: true,
-      expires_at: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
-      type: 'upload'
-    });
+    // Use direct Cloudinary URL (works with unsigned preset)
+    // If you need signed URLs, change your Cloudinary preset to "Signed" mode
+    const viewUrl = document.cloudinary_url;
 
-    console.log('✅ Generated signed URL for secure access:', signedUrl);
+    console.log('✅ Using direct Cloudinary URL:', viewUrl);
 
-    // Return the signed URL for secure access
+    // Return the URL for viewing
     res.json({
       filename: document.filename,
-      url: signedUrl,
+      url: viewUrl,
       department: document.department,
-      upload_date: document.upload_date,
-      expires_in: '1 hour'
+      upload_date: document.upload_date
     });
 
   } catch (error) {
