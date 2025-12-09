@@ -249,7 +249,8 @@
 }
 
 .filename-cell {
-  min-width: 250px;
+  max-width: 300px;
+  min-width: 200px;
 }
 
 .file-info {
@@ -260,24 +261,47 @@
 
 .file-icon {
   font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .filename {
   font-weight: 500;
   color: #2c3e50;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
-.department-badge {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
+.department-cell {
+  max-width: 180px;
+  min-width: 140px;
+  color: #2c3e50;
   font-weight: 500;
 }
 
-.actions-cell {
+.uploaded-by-cell {
+  max-width: 150px;
+  min-width: 120px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-transform: capitalize;
+}
+
+.date-cell {
+  max-width: 180px;
   min-width: 150px;
+  white-space: nowrap;
+}
+
+.size-cell {
+  max-width: 100px;
+  min-width: 80px;
+  text-align: right;
+}
+
+.actions-cell {
+  max-width: 200px;
+  min-width: 150px;
+  white-space: nowrap;
 }
 
 .action-button {
