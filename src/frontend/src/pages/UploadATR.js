@@ -115,9 +115,9 @@ const UploadATR = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 25 * 1024 * 1024) { // 25MB limit
       console.log('❌ File too large:', file.size, 'bytes');
-      toast.error('File size must be less than 10MB');
+      toast.error('File size must be less than 25MB');
       return;
     }
 
@@ -128,7 +128,7 @@ const UploadATR = () => {
       const formData = new FormData();
       formData.append('pdf', file);
       
-      console.log('📤 FormData created, making API call to /atr/upload');
+      console.log('📤 FormData created, making API call to /atr/upload (Railway deployment)');
       console.log('🔑 Auth token present:', !!localStorage.getItem('token'));
 
       const response = await api.post('/atr/upload', formData, {
@@ -223,7 +223,7 @@ const UploadATR = () => {
             <>
               <div className="upload-icon">📄</div>
               <h3>Drop PDF files here or click to browse</h3>
-              <p>Maximum file size: 10MB</p>
+              <p>Maximum file size: 25MB</p>
               <input
                 type="file"
                 accept=".pdf"
