@@ -267,11 +267,15 @@ Video links connect features to sites with additional metadata:
 ## 🔒 Security Features
 
 - **Input Validation**: All inputs are validated on both client and server
-- **SQL Injection Prevention**: Parameterized queries throughout
+- **SQL Injection Prevention**: Parameterized queries throughout both databases
 - **XSS Protection**: Helmet middleware for security headers
 - **CORS Configuration**: Proper cross-origin resource sharing setup
-- **Authentication**: JWT-based authentication system
+- **Password Security**: bcrypt hashing with salt rounds
+- **JWT Authentication**: Secure token-based authentication with expiration
 - **Role-based Authorization**: Different access levels for different user types
+- **Database Isolation**: Separate PostgreSQL tables for admin and user roles
+- **Protected Routes**: Middleware-based route protection
+- **Department Isolation**: Users can only access their department's data
 
 ## 🚀 Deployment
 
@@ -289,11 +293,14 @@ docker-compose restart backend
 
 ### Production
 For production deployment, consider:
-- Using environment variables for sensitive data
+- Using environment variables for sensitive data (DATABASE_URL, JWT_SECRET)
 - Setting up SSL/TLS certificates
 - Configuring a reverse proxy (Nginx)
-- Setting up database backups
+- Setting up database backups for both PostgreSQL and SQLite
 - Implementing monitoring and logging
+- Configuring PostgreSQL connection pooling
+- Setting appropriate JWT token expiration times
+- Regular security audits and dependency updates
 
 ## 🤝 Contributing
 
@@ -318,8 +325,12 @@ For support and questions:
 ## 🔄 Updates & Maintenance
 
 Regular maintenance tasks:
-- Update dependencies
+- Update dependencies (npm audit fix)
 - Review security vulnerabilities
-- Backup database regularly
-- Monitor application performance
+- Backup both PostgreSQL and SQLite databases regularly
+- Monitor application performance and database connections
 - Update documentation as needed
+- Review and rotate JWT secrets periodically
+- Monitor PostgreSQL connection pool usage
+- Clean up old ATR documents if needed
+- Review user access and permissions
