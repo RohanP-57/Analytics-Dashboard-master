@@ -43,10 +43,10 @@ const getDepartmentFolder = (department) => {
   return departmentMap[department] || 'general';
 };
 
-// Upload ATR document
+// Upload AI Report document
 router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res) => {
   try {
-    console.log('🔍 ATR Upload Request Started');
+    console.log('🔍 AI Report Upload Request Started');
     console.log('📤 User:', req.user?.username, 'Department:', req.user?.department);
     console.log('📁 File received:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
 
@@ -54,6 +54,9 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       console.log('❌ No file provided in request');
       return res.status(400).json({ error: 'No PDF file provided' });
     }
+
+    // Get optional fields from request body
+    const { comment, hyperlink } = req.body;
 
     // Determine department based on user role
     let department = req.user.department;
@@ -87,8 +90,8 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
           folder: `atr-documents/${departmentFolder}`,
           public_id: filename.replace('.pdf', ''),
           format: 'pdf',
-          type: 'upload', // Ensure public delivery
-          access_mode: 'public' // Make file publicly accessible
+          type: 'upload',
+          access_mode: 'public'
         },
         (error, result) => {
           if (error) {
@@ -110,33 +113,37 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       cloudinary_public_id: uploadResult.public_id,
       department: department,
       uploaded_by: req.user.id,
-      file_size: req.file.size
+      file_size: req.file.size,
+      comment: comment || null,
+      hyperlink: hyperlink || null
     };
 
     const document = await AtrDocument.createDocument(documentData);
     console.log('✅ Database save successful, document ID:', document.id);
 
     res.status(201).json({
-      message: 'ATR document uploaded successfully',
+      message: 'AI Report uploaded successfully',
       document: {
         id: document.id,
         filename: document.filename,
         department: document.department,
         upload_date: document.upload_date,
-        file_size: document.file_size
+        file_size: document.file_size,
+        comment: document.comment,
+        hyperlink: document.hyperlink
       }
     });
 
-    console.log('🎉 ATR Upload completed successfully');
+    console.log('🎉 AI Report Upload completed successfully');
 
   } catch (error) {
-    console.error('❌ ATR Upload error:', error);
+    console.error('❌ AI Report Upload error:', error);
     console.error('❌ Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to upload document: ' + error.message });
   }
 });
 
-// Get ATR documents for user's department
+// Get AI Reports for user's department
 router.get('/list', authenticateToken, async (req, res) => {
   try {
     let documents;
@@ -160,7 +167,12 @@ router.get('/list', authenticateToken, async (req, res) => {
         upload_date: doc.upload_date,
         file_size: doc.file_size,
         cloudinary_url: doc.cloudinary_url,
-        canDelete: doc.uploaded_by === req.user.id || req.user.role === 'admin'
+        comment: doc.comment,
+        ai_report_url: doc.ai_report_url,
+        ai_report_public_id: doc.ai_report_public_id,
+        hyperlink: doc.hyperlink,
+        canDelete: doc.uploaded_by === req.user.id || req.user.role === 'admin',
+        canEdit: doc.uploaded_by === req.user.id || req.user.role === 'admin'
       }))
     });
 
@@ -218,7 +230,129 @@ router.get('/view/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete ATR document
+// Update comment
+router.patch('/:id/comment', authenticateToken, async (req, res) => {
+  try {
+    const { comment } = req.body;
+    const document = await AtrDocument.getDocumentById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Check if user can edit
+    const canEdit = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    await AtrDocument.updateComment(req.params.id, comment);
+    res.json({ message: 'Comment updated successfully', comment });
+
+  } catch (error) {
+    console.error('Update comment error:', error);
+    res.status(500).json({ error: 'Failed to update comment: ' + error.message });
+  }
+});
+
+// Update hyperlink
+router.patch('/:id/hyperlink', authenticateToken, async (req, res) => {
+  try {
+    const { hyperlink } = req.body;
+    const document = await AtrDocument.getDocumentById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Check if user can edit
+    const canEdit = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    await AtrDocument.updateHyperlink(req.params.id, hyperlink);
+    res.json({ message: 'Hyperlink updated successfully', hyperlink });
+
+  } catch (error) {
+    console.error('Update hyperlink error:', error);
+    res.status(500).json({ error: 'Failed to update hyperlink: ' + error.message });
+  }
+});
+
+// Upload AI Report PDF
+router.post('/:id/ai-report', authenticateToken, upload.single('pdf'), async (req, res) => {
+  try {
+    console.log('🔍 AI Report PDF Upload Request');
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file provided' });
+    }
+
+    const document = await AtrDocument.getDocumentById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Check if user can edit
+    const canEdit = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const departmentFolder = getDepartmentFolder(document.department);
+    const timestamp = Date.now();
+    const filename = `ai_report_${timestamp}_${req.file.originalname}`;
+
+    // Upload to Cloudinary
+    console.log('☁️ Uploading AI Report to Cloudinary...');
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: `atr-documents/${departmentFolder}/ai-reports`,
+          public_id: filename.replace('.pdf', ''),
+          format: 'pdf',
+          type: 'upload',
+          access_mode: 'public'
+        },
+        (error, result) => {
+          if (error) {
+            console.log('❌ Cloudinary upload failed:', error.message);
+            reject(error);
+          } else {
+            console.log('✅ AI Report uploaded:', result.secure_url);
+            resolve(result);
+          }
+        }
+      ).end(req.file.buffer);
+    });
+
+    // Update database
+    await AtrDocument.updateAiReport(req.params.id, uploadResult.secure_url, uploadResult.public_id);
+
+    res.json({
+      message: 'AI Report uploaded successfully',
+      ai_report_url: uploadResult.secure_url
+    });
+
+  } catch (error) {
+    console.error('Upload AI Report error:', error);
+    res.status(500).json({ error: 'Failed to upload AI Report: ' + error.message });
+  }
+});
+
+// Delete AI Report document
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const document = await AtrDocument.getDocumentById(req.params.id);
@@ -236,10 +370,17 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Permission denied' });
     }
 
-    // Delete from Cloudinary
+    // Delete original document from Cloudinary
     await cloudinary.uploader.destroy(document.cloudinary_public_id, {
       resource_type: 'raw'
     });
+
+    // Delete AI report from Cloudinary if exists
+    if (document.ai_report_public_id) {
+      await cloudinary.uploader.destroy(document.ai_report_public_id, {
+        resource_type: 'raw'
+      });
+    }
 
     // Delete from database
     const deleted = await AtrDocument.deleteDocument(req.params.id);

@@ -211,7 +211,7 @@ class HybridDatabase {
       else console.log('✅ User table ready (SQLite fallback)');
     });
 
-    // ATR documents table in SQLite
+    // ATR documents table in SQLite (fallback)
     this.sqliteDb.run(`
       CREATE TABLE IF NOT EXISTS atr_documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -221,7 +221,11 @@ class HybridDatabase {
         department TEXT NOT NULL,
         uploaded_by INTEGER NOT NULL,
         file_size INTEGER,
-        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP
+        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        comment TEXT,
+        ai_report_url TEXT,
+        ai_report_public_id TEXT,
+        hyperlink TEXT
       )
     `, (err) => {
       if (err) console.error('Error creating atr_documents table in SQLite:', err);
@@ -268,7 +272,7 @@ class HybridDatabase {
       `);
       console.log('✅ User table created');
 
-      // ATR documents table
+      // ATR documents table (now AI Reports)
       console.log('🔄 Creating atr_documents table...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS atr_documents (
@@ -279,7 +283,11 @@ class HybridDatabase {
           department TEXT NOT NULL,
           uploaded_by INTEGER NOT NULL,
           file_size INTEGER,
-          upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          comment TEXT,
+          ai_report_url TEXT,
+          ai_report_public_id TEXT,
+          hyperlink TEXT
         )
       `);
       console.log('✅ ATR documents table created');
