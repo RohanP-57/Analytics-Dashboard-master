@@ -9,6 +9,7 @@ const path = require('path');
  */
 class HybridDatabase {
   constructor() {
+    console.log('🚀 HybridDatabase constructor called');
     this.sqliteDb = null;
     this.pgPool = null;
     this.usePostgres = false;
@@ -474,5 +475,10 @@ class HybridDatabase {
   }
 }
 
+// Create and export the hybrid database instance
 const database = new HybridDatabase();
+
+// Ensure initialization happens
+console.log('📦 HybridDatabase module loaded');
+
 module.exports = database;

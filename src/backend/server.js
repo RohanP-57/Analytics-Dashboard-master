@@ -256,6 +256,139 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Database status endpoint
+app.get('/api/debug/database', (req, res) => {
+  const database = require('./utils/database');
+  res.json({
+    status: 'OK',
+    database_type: database.usePostgres ? 'PostgreSQL' : 'SQLite',
+    postgres_available: !!database.pgPool,
+    sqlite_available: !!database.sqliteDb,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Migrate users from SQLite to PostgreSQL (one-time use)
+app.post('/api/debug/migrate-users', async (req, res) => {
+  try {
+    const database = require('./utils/database');
+    
+    if (!database.usePostgres) {
+      return res.status(400).json({ error: 'PostgreSQL not available for migration' });
+    }
+    
+    let migratedCount = 0;
+    let errors = [];
+    
+    // Migrate admin users from SQLite to PostgreSQL
+    try {
+      const sqliteAdmins = await database.allSQLite('SELECT * FROM admin');
+      console.log(`Found ${sqliteAdmins.length} admin users in SQLite`);
+      
+      for (const admin of sqliteAdmins) {
+        try {
+          await database.runPostgres(
+            'INSERT INTO admin (username, email, password_hash, full_name, permissions, created_at) VALUES ($1, $2, $3, $4, $5, $6)',
+            [admin.username, admin.email, admin.password_hash, admin.full_name, admin.permissions || 'all', admin.created_at]
+          );
+          migratedCount++;
+          console.log(`✅ Migrated admin: ${admin.username}`);
+        } catch (err) {
+          console.error(`❌ Failed to migrate admin ${admin.username}:`, err.message);
+          errors.push(`Admin ${admin.username}: ${err.message}`);
+        }
+      }
+    } catch (err) {
+      console.log('No admin table in SQLite or error reading:', err.message);
+    }
+    
+    // Migrate regular users from SQLite to PostgreSQL
+    try {
+      const sqliteUsers = await database.allSQLite('SELECT * FROM "user"');
+      console.log(`Found ${sqliteUsers.length} regular users in SQLite`);
+      
+      for (const user of sqliteUsers) {
+        try {
+          await database.runPostgres(
+            'INSERT INTO "user" (username, email, password_hash, full_name, department, access_level, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [user.username, user.email, user.password_hash, user.full_name, user.department, user.access_level || 'basic', user.created_at]
+          );
+          migratedCount++;
+          console.log(`✅ Migrated user: ${user.username}`);
+        } catch (err) {
+          console.error(`❌ Failed to migrate user ${user.username}:`, err.message);
+          errors.push(`User ${user.username}: ${err.message}`);
+        }
+      }
+    } catch (err) {
+      console.log('No user table in SQLite or error reading:', err.message);
+    }
+    
+    // Also migrate any users from the legacy 'users' table
+    try {
+      const legacyUsers = await database.allSQLite('SELECT * FROM users');
+      console.log(`Found ${legacyUsers.length} legacy users in SQLite`);
+      
+      for (const user of legacyUsers) {
+        try {
+          // Determine if this should go to admin or user table based on role
+          if (user.role === 'admin') {
+            await database.runPostgres(
+              'INSERT INTO admin (username, email, password_hash, permissions, created_at) VALUES ($1, $2, $3, $4, $5)',
+              [user.username, user.email, user.password_hash, 'all', user.created_at]
+            );
+          } else {
+            await database.runPostgres(
+              'INSERT INTO "user" (username, email, password_hash, access_level, created_at) VALUES ($1, $2, $3, $4, $5)',
+              [user.username, user.email, user.password_hash, 'basic', user.created_at]
+            );
+          }
+          migratedCount++;
+          console.log(`✅ Migrated legacy user: ${user.username} (${user.role})`);
+        } catch (err) {
+          console.error(`❌ Failed to migrate legacy user ${user.username}:`, err.message);
+          errors.push(`Legacy user ${user.username}: ${err.message}`);
+        }
+      }
+    } catch (err) {
+      console.log('No legacy users table in SQLite or error reading:', err.message);
+    }
+    
+    // Also migrate ATR documents from SQLite to PostgreSQL
+    try {
+      const sqliteATRDocs = await database.allSQLite('SELECT * FROM atr_documents');
+      console.log(`Found ${sqliteATRDocs.length} ATR documents in SQLite`);
+      
+      for (const doc of sqliteATRDocs) {
+        try {
+          await database.runPostgres(
+            'INSERT INTO atr_documents (filename, cloudinary_url, cloudinary_public_id, department, uploaded_by, file_size, upload_date) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [doc.filename, doc.cloudinary_url, doc.cloudinary_public_id, doc.department, doc.uploaded_by, doc.file_size, doc.upload_date]
+          );
+          migratedCount++;
+          console.log(`✅ Migrated ATR document: ${doc.filename}`);
+        } catch (err) {
+          console.error(`❌ Failed to migrate ATR document ${doc.filename}:`, err.message);
+          errors.push(`ATR document ${doc.filename}: ${err.message}`);
+        }
+      }
+    } catch (err) {
+      console.log('No ATR documents table in SQLite or error reading:', err.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Migration completed! ${migratedCount} users and ATR documents migrated to PostgreSQL`,
+      migrated_count: migratedCount,
+      errors: errors.length > 0 ? errors : null
+    });
+    
+  } catch (error) {
+    console.error('Migration error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Debug endpoint to check frontend files
 app.get('/api/debug/frontend', (req, res) => {
   const path = require('path');
