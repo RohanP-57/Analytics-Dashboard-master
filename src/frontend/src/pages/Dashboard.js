@@ -4,6 +4,7 @@ import KPICard from '../components/KPICard';
 import { PieChart, LineChart, BarChart } from '../components/Charts';
 import { analyticsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const [kpis, setKpis] = useState({});
@@ -43,28 +44,28 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="dashboard-loading">
+        <div className="dashboard-spinner animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="dashboard-container space-y-6">
+      <div className="dashboard-header flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-600 mt-1">Analytics and monitoring overview</p>
         </div>
         <button
           onClick={fetchDashboardData}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="dashboard-refresh-btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Refresh
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="dashboard-kpi-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
           title="Total Violations"
           value={kpis.total_violations || 0}
@@ -92,21 +93,27 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PieChart
-          data={pieData}
-          title="Violation Type Distribution"
-        />
-        <BarChart
-          data={droneData}
-          title="Violations by Drone"
-        />
+        <div className="dashboard-chart-left">
+          <PieChart
+            data={pieData}
+            title="Violation Type Distribution"
+          />
+        </div>
+        <div className="dashboard-chart-right">
+          <BarChart
+            data={droneData}
+            title="Violations by Drone"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1">
-        <LineChart
-          data={timeSeriesData}
-          title="Violations Over Time"
-        />
+        <div className="dashboard-chart-full">
+          <LineChart
+            data={timeSeriesData}
+            title="Violations Over Time"
+          />
+        </div>
       </div>
     </div>
   );

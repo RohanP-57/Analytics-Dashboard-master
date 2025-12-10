@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Video } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sitesAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import './Sites.css';
 
 const Sites = () => {
   const { user } = useAuth();
@@ -105,15 +106,15 @@ const Sites = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="sites-loading">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="sites-container space-y-6">
+      <div className="sites-header flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Site Management</h1>
           <p className="text-sm text-gray-600 mt-1">
@@ -131,9 +132,9 @@ const Sites = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="sites-grid">
         {sites.map((site) => (
-          <div key={site.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <div key={site.id} className="site-card">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-5 w-5 text-blue-600" />

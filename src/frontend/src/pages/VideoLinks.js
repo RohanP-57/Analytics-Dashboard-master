@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, ExternalLink, Video, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sitesAPI } from '../services/api';
+import './VideoLinks.css';
 
 const VideoLinks = () => {
   const [videoLinks, setVideoLinks] = useState([]);
@@ -230,16 +231,16 @@ const VideoLinks = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="video-links-loading">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="video-links-container space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="video-links-header flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Video Links</h1>
         </div>
@@ -256,8 +257,8 @@ const VideoLinks = () => {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow">
+        <div className="video-links-stats grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="stat-card">
             <div className="flex items-center">
               <Video className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
@@ -320,9 +321,9 @@ const VideoLinks = () => {
       </div>
 
       {/* Video Links Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredLinks.map(link => (
-          <div key={link.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="video-links-grid">
+        {filteredLinks.map((link) => (
+          <div key={link.id} className="video-card">
             {/* Video Thumbnail */}
             <div className="relative h-48 bg-gray-200">
               {getVideoThumbnail(link.video_url) ? (

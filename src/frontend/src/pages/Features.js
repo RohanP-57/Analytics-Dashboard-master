@@ -3,6 +3,7 @@ import { Search, Plus, BarChart3, AlertTriangle, Eye, X } from 'lucide-react';
 import { featuresAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import './Features.css';
 
 const Features = () => {
   const { user } = useAuth();
@@ -109,15 +110,15 @@ const Features = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="features-loading">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="features-container space-y-6">
+      <div className="features-header flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Features</h1>
           <p className="text-sm text-gray-600 mt-1">Manage and monitor detection features</p>
@@ -139,7 +140,7 @@ const Features = () => {
       </div>
 
       {/* Search Controls */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="features-search-bar bg-white rounded-lg shadow p-6">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
@@ -153,13 +154,13 @@ const Features = () => {
       </div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="features-grid">
         {filteredFeatures.map((feature) => {
           const stats = getFeatureStats(feature.name);
           return (
             <div
               key={feature.name}
-              className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+              className="feature-card"
               onClick={() => fetchFeatureViolations(feature.name)}
             >
               <div className="p-6">

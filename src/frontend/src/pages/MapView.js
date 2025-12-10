@@ -5,6 +5,7 @@ import { violationsAPI, boundariesAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import './MapView.css';
 
 // Simple image component that works with Google Drive through backend proxy
 const ImageWithFallback = ({ src, alt, className }) => {
@@ -311,8 +312,8 @@ const MapView = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="map-view-container space-y-4">
+      <div className="map-view-header flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Map View</h1>
           <p className="text-gray-600 mt-1">
@@ -323,14 +324,14 @@ const MapView = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="filter-button flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             <Filter className="h-4 w-4" />
             <span>Filters</span>
           </button>
           <button
             onClick={fetchMapData}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="refresh-button flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
@@ -339,7 +340,7 @@ const MapView = () => {
       </div>
 
       {showFilters && (
-        <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="map-filters bg-white rounded-lg shadow-md p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -411,9 +412,9 @@ const MapView = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '600px' }}>
+      <div className="map-container" style={{ height: '600px' }}>
         {loading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="map-loading">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <span className="ml-2 text-gray-600">Loading map data...</span>
           </div>
@@ -489,13 +490,13 @@ const MapView = () => {
       </div>
 
       {activeLegends.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="map-legend">
           <h3 className="text-lg font-medium text-gray-900 mb-3">Features</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {activeLegends.map((legend) => (
-              <div key={legend.name} className="flex items-center space-x-2">
+              <div key={legend.name} className="legend-item">
                 <div
-                  className="w-4 h-4 rounded-full"
+                  className="legend-color"
                   style={{ backgroundColor: legend.color }}
                 ></div>
                 <span className="text-sm text-gray-700">{legend.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
