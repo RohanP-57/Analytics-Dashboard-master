@@ -1,4 +1,4 @@
-const database = require('../utils/database');
+const database = require('../utils/databaseHybrid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
