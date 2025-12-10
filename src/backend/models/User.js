@@ -46,20 +46,20 @@ class UserModel {
       // If role is specified, search only in that specific table
       if (selectedRole === 'admin') {
         user = await database.get(
-          'SELECT *, "admin" as user_type FROM admin WHERE email = ?',
+          'SELECT id, username, email, password_hash, full_name, permissions, created_at FROM admin WHERE email = ?',
           [email]
         );
         userType = user ? 'admin' : null;
       } else if (selectedRole === 'user') {
         user = await database.get(
-          'SELECT *, "user" as user_type FROM user WHERE email = ?',
+          'SELECT id, username, email, password_hash, full_name, department, access_level, created_at FROM "user" WHERE email = ?',
           [email]
         );
         userType = user ? 'user' : null;
       } else {
         // Fallback: search all tables if no role specified (backward compatibility)
         user = await database.get(
-          'SELECT *, "admin" as user_type FROM admin WHERE email = ?',
+          'SELECT id, username, email, password_hash, full_name, permissions, created_at FROM admin WHERE email = ?',
           [email]
         );
 
@@ -67,7 +67,7 @@ class UserModel {
           userType = 'admin';
         } else {
           user = await database.get(
-            'SELECT *, "user" as user_type FROM user WHERE email = ?',
+            'SELECT id, username, email, password_hash, full_name, department, access_level, created_at FROM "user" WHERE email = ?',
             [email]
           );
 
@@ -75,7 +75,7 @@ class UserModel {
             userType = 'user';
           } else {
             user = await database.get(
-              'SELECT *, role as user_type FROM users WHERE email = ?',
+              'SELECT id, username, email, password_hash, role, created_at FROM users WHERE email = ?',
               [email]
             );
 
@@ -155,33 +155,38 @@ class UserModel {
 
       if (userType === 'admin') {
         user = await database.get(
-          'SELECT id, username, email, full_name, permissions, created_at, "admin" as user_type FROM admin WHERE id = ?',
+          'SELECT id, username, email, full_name, permissions, created_at FROM admin WHERE id = ?',
           [userId]
         );
+        if (user) user.user_type = 'admin';
       } else if (userType === 'user') {
         user = await database.get(
-          'SELECT id, username, email, full_name, department, access_level, created_at, "user" as user_type FROM user WHERE id = ?',
+          'SELECT id, username, email, full_name, department, access_level, created_at FROM "user" WHERE id = ?',
           [userId]
         );
+        if (user) user.user_type = 'user';
       } else {
         // Check all tables if userType not specified
         user = await database.get(
-          'SELECT id, username, email, full_name, permissions, created_at, "admin" as user_type FROM admin WHERE id = ?',
+          'SELECT id, username, email, full_name, permissions, created_at FROM admin WHERE id = ?',
           [userId]
         );
+        if (user) user.user_type = 'admin';
 
         if (!user) {
           user = await database.get(
-            'SELECT id, username, email, full_name, department, access_level, created_at, "user" as user_type FROM user WHERE id = ?',
+            'SELECT id, username, email, full_name, department, access_level, created_at FROM "user" WHERE id = ?',
             [userId]
           );
+          if (user) user.user_type = 'user';
         }
 
         if (!user) {
           user = await database.get(
-            'SELECT id, username, email, role, created_at, role as user_type FROM users WHERE id = ?',
+            'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
             [userId]
           );
+          if (user) user.user_type = user.role || 'user';
         }
       }
 
