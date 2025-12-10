@@ -252,6 +252,36 @@ const UploadATR = () => {
     }
   };
 
+  const handleDeleteComment = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return;
+    }
+
+    try {
+      await api.patch(`/atr/${documentId}/comment`, { comment: '' });
+      toast.success('Comment deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      toast.error('Failed to delete comment');
+    }
+  };
+
+  const handleDeleteHyperlink = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this hyperlink?')) {
+      return;
+    }
+
+    try {
+      await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink: '' });
+      toast.success('Hyperlink deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete hyperlink error:', error);
+      toast.error('Failed to delete hyperlink');
+    }
+  };
+
   const isValidUrl = (string) => {
     try {
       new URL(string);
@@ -507,14 +537,35 @@ const UploadATR = () => {
                       ) : (
                         <div className="view-field">
                           <span className="field-value">{doc.comment || '-'}</span>
-                          {doc.canEdit && (
+                          {doc.canEdit && doc.comment && (
+                            <>
+                              <button 
+                                className="icon-button edit"
+                                onClick={() => {
+                                  setEditingComment(doc.id);
+                                  setEditValues({...editValues, [`comment_${doc.id}`]: doc.comment || ''});
+                                }}
+                                title="Edit comment"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button 
+                                className="icon-button delete"
+                                onClick={() => handleDeleteComment(doc.id)}
+                                title="Delete comment"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                          {doc.canEdit && !doc.comment && (
                             <button 
                               className="icon-button edit"
                               onClick={() => {
                                 setEditingComment(doc.id);
-                                setEditValues({...editValues, [`comment_${doc.id}`]: doc.comment || ''});
+                                setEditValues({...editValues, [`comment_${doc.id}`]: ''});
                               }}
-                              title="Edit comment"
+                              title="Add comment"
                             >
                               <Edit2 size={14} />
                             </button>
@@ -588,29 +639,54 @@ const UploadATR = () => {
                       ) : (
                         <div className="view-field">
                           {doc.hyperlink ? (
-                            <a 
-                              href={doc.hyperlink} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="hyperlink-icon"
-                              title={doc.hyperlink}
-                            >
-                              <LinkIcon size={18} />
-                            </a>
+                            <>
+                              <a 
+                                href={doc.hyperlink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hyperlink-icon"
+                                title={doc.hyperlink}
+                              >
+                                <LinkIcon size={18} />
+                              </a>
+                              {doc.canEdit && (
+                                <>
+                                  <button 
+                                    className="icon-button edit"
+                                    onClick={() => {
+                                      setEditingHyperlink(doc.id);
+                                      setEditValues({...editValues, [`hyperlink_${doc.id}`]: doc.hyperlink || ''});
+                                    }}
+                                    title="Edit hyperlink"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button 
+                                    className="icon-button delete"
+                                    onClick={() => handleDeleteHyperlink(doc.id)}
+                                    title="Delete hyperlink"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              )}
+                            </>
                           ) : (
-                            <span>-</span>
-                          )}
-                          {doc.canEdit && (
-                            <button 
-                              className="icon-button edit"
-                              onClick={() => {
-                                setEditingHyperlink(doc.id);
-                                setEditValues({...editValues, [`hyperlink_${doc.id}`]: doc.hyperlink || ''});
-                              }}
-                              title="Edit hyperlink"
-                            >
-                              <Edit2 size={14} />
-                            </button>
+                            <>
+                              <span>-</span>
+                              {doc.canEdit && (
+                                <button 
+                                  className="icon-button edit"
+                                  onClick={() => {
+                                    setEditingHyperlink(doc.id);
+                                    setEditValues({...editValues, [`hyperlink_${doc.id}`]: ''});
+                                  }}
+                                  title="Add hyperlink"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
