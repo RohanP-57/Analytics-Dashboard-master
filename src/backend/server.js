@@ -268,8 +268,94 @@ app.get('/api/debug/database', (req, res) => {
   });
 });
 
-// Migrate users from SQLite to PostgreSQL (one-time use)
-app.post('/api/debug/migrate-users', async (req, res) => {
+// Read SQLite data to see what users exist
+app.get('/api/debug/read-sqlite-users', async (req, res) => {
+  try {
+    const database = require('./utils/database');
+    
+    let result = {
+      admin_users: [],
+      regular_users: [],
+      legacy_users: [],
+      atr_documents: []
+    };
+    
+    // Read admin table
+    try {
+      const admins = await database.allSQLite('SELECT * FROM admin');
+      result.admin_users = admins.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        full_name: user.full_name,
+        permissions: user.permissions,
+        created_at: user.created_at,
+        has_password: !!user.password_hash
+      }));
+      console.log(`Found ${admins.length} admin users in SQLite`);
+    } catch (err) {
+      console.log('No admin table in SQLite:', err.message);
+    }
+    
+    // Read user table
+    try {
+      const users = await database.allSQLite('SELECT * FROM "user"');
+      result.regular_users = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        full_name: user.full_name,
+        department: user.department,
+        access_level: user.access_level,
+        created_at: user.created_at,
+        has_password: !!user.password_hash
+      }));
+      console.log(`Found ${users.length} regular users in SQLite`);
+    } catch (err) {
+      console.log('No user table in SQLite:', err.message);
+    }
+    
+    // Read legacy users table
+    try {
+      const legacyUsers = await database.allSQLite('SELECT * FROM users');
+      result.legacy_users = legacyUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        has_password: !!user.password_hash
+      }));
+      console.log(`Found ${legacyUsers.length} legacy users in SQLite`);
+    } catch (err) {
+      console.log('No legacy users table in SQLite:', err.message);
+    }
+    
+    // Read ATR documents (just count)
+    try {
+      const atrDocs = await database.allSQLite('SELECT COUNT(*) as count FROM atr_documents');
+      result.atr_documents_count = atrDocs[0]?.count || 0;
+      console.log(`Found ${result.atr_documents_count} ATR documents in SQLite`);
+    } catch (err) {
+      console.log('No ATR documents table in SQLite:', err.message);
+      result.atr_documents_count = 0;
+    }
+    
+    res.json({
+      success: true,
+      message: 'SQLite data read successfully',
+      data: result,
+      total_users: result.admin_users.length + result.regular_users.length + result.legacy_users.length
+    });
+    
+  } catch (error) {
+    console.error('Read SQLite error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Migrate users from SQLite to PostgreSQL (one-time use) - GET version for easy access
+app.get('/api/debug/migrate-users', async (req, res) => {
   try {
     const database = require('./utils/database');
     
@@ -376,11 +462,31 @@ app.post('/api/debug/migrate-users', async (req, res) => {
       console.log('No ATR documents table in SQLite or error reading:', err.message);
     }
 
+    // If no users were migrated, create default admin account
+    if (migratedCount === 0) {
+      console.log('No users found in SQLite, creating default admin account...');
+      const bcrypt = require('bcryptjs');
+      
+      try {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await database.runPostgres(
+          'INSERT INTO admin (username, email, password_hash, permissions, created_at) VALUES ($1, $2, $3, $4, $5)',
+          ['AEROVANIA MASTER', 'admin@aerovania.com', hashedPassword, 'all', new Date().toISOString()]
+        );
+        migratedCount++;
+        console.log('✅ Created default admin account: AEROVANIA MASTER / admin123');
+      } catch (err) {
+        console.error('❌ Failed to create default admin:', err.message);
+        errors.push(`Default admin creation: ${err.message}`);
+      }
+    }
+
     res.json({
       success: true,
       message: `Migration completed! ${migratedCount} users and ATR documents migrated to PostgreSQL`,
       migrated_count: migratedCount,
-      errors: errors.length > 0 ? errors : null
+      errors: errors.length > 0 ? errors : null,
+      note: migratedCount === 1 && errors.length === 0 ? 'Default admin created: AEROVANIA MASTER / admin123' : null
     });
     
   } catch (error) {
