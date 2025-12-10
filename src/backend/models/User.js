@@ -230,30 +230,12 @@ class UserModel {
     return await this.getUserById(userId, userType);
   }
 
-  // Find all users from all tables
+  // Find all users (only regular users, not admins)
   async findAll() {
     try {
       const users = [];
 
-      // Get admin users
-      const admins = await database.all(
-        'SELECT id, username, email, full_name, permissions, created_at FROM admin'
-      );
-      admins.forEach(admin => {
-        users.push({
-          id: admin.id,
-          username: admin.username,
-          email: admin.email,
-          fullName: admin.full_name || admin.username,
-          role: 'admin',
-          userType: 'admin',
-          permissions: admin.permissions || 'all',
-          department: null,
-          created_at: admin.created_at
-        });
-      });
-
-      // Get regular users
+      // Get only regular users (not admins)
       const regularUsers = await database.all(
         'SELECT id, username, email, full_name, department, access_level, created_at FROM "user"'
       );
