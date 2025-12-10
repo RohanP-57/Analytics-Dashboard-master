@@ -237,6 +237,21 @@ const UploadATR = () => {
     }
   };
 
+  const handleDeleteAiReport = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this AI Report?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/atr/${documentId}/ai-report`);
+      toast.success('AI Report deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete AI Report error:', error);
+      toast.error('Failed to delete AI Report');
+    }
+  };
+
   const isValidUrl = (string) => {
     try {
       new URL(string);
@@ -511,13 +526,24 @@ const UploadATR = () => {
                     {/* AI Report Column */}
                     <td className="ai-report-cell">
                       {doc.ai_report_url ? (
-                        <button 
-                          className="icon-button view"
-                          onClick={() => handleViewAiReport(doc.ai_report_url)}
-                          title="View AI Report"
-                        >
-                          <Eye size={18} />
-                        </button>
+                        <div className="ai-report-actions">
+                          <button 
+                            className="icon-button view"
+                            onClick={() => handleViewAiReport(doc.ai_report_url)}
+                            title="View AI Report"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          {doc.canEdit && (
+                            <button 
+                              className="icon-button delete"
+                              onClick={() => handleDeleteAiReport(doc.id)}
+                              title="Delete AI Report"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       ) : doc.canEdit ? (
                         <label className="upload-ai-report-label">
                           <input

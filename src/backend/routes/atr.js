@@ -312,6 +312,18 @@ router.post('/:id/ai-report', authenticateToken, upload.single('pdf'), async (re
       return res.status(403).json({ error: 'Permission denied' });
     }
 
+    // Delete old AI report from Cloudinary if exists
+    if (document.ai_report_public_id) {
+      try {
+        await cloudinary.uploader.destroy(document.ai_report_public_id, {
+          resource_type: 'raw'
+        });
+        console.log('✅ Old AI Report deleted from Cloudinary');
+      } catch (deleteError) {
+        console.log('⚠️ Failed to delete old AI Report:', deleteError.message);
+      }
+    }
+
     const departmentFolder = getDepartmentFolder(document.department);
     const timestamp = Date.now();
     const filename = `ai_report_${timestamp}_${req.file.originalname}`;
@@ -351,6 +363,53 @@ router.post('/:id/ai-report', authenticateToken, upload.single('pdf'), async (re
   } catch (error) {
     console.error('Upload AI Report error:', error);
     res.status(500).json({ error: 'Failed to upload AI Report: ' + error.message });
+  }
+});
+
+// Delete AI Report PDF
+router.delete('/:id/ai-report', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔍 AI Report Delete Request');
+    
+    const document = await AtrDocument.getDocumentById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Check if user can edit
+    const canEdit = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    if (!document.ai_report_public_id) {
+      return res.status(404).json({ error: 'No AI Report found for this document' });
+    }
+
+    // Delete from Cloudinary
+    try {
+      await cloudinary.uploader.destroy(document.ai_report_public_id, {
+        resource_type: 'raw'
+      });
+      console.log('✅ AI Report deleted from Cloudinary');
+    } catch (deleteError) {
+      console.log('⚠️ Failed to delete AI Report from Cloudinary:', deleteError.message);
+    }
+
+    // Update database (set to null)
+    await AtrDocument.updateAiReport(req.params.id, null, null);
+
+    res.json({
+      message: 'AI Report deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete AI Report error:', error);
+    res.status(500).json({ error: 'Failed to delete AI Report: ' + error.message });
   }
 });
 

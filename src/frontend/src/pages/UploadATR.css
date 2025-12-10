@@ -524,6 +524,12 @@
   background: #f3f4f6;
 }
 
+.ai-report-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
 .upload-ai-report-label {
   display: inline-flex;
   align-items: center;
