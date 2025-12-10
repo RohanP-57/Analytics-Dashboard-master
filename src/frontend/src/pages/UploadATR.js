@@ -13,7 +13,7 @@ const UploadATR = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
-  
+
   console.log('🔍 Admin Detection Debug:', {
     user: user?.username,
     role: user?.role,
@@ -34,10 +34,10 @@ const UploadATR = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const params = isAdmin && selectedDepartment !== 'all' 
-        ? { department: selectedDepartment } 
+      const params = isAdmin && selectedDepartment !== 'all'
+        ? { department: selectedDepartment }
         : {};
-      
+
       const response = await api.get('/atr/list', { params });
       const documentsData = response.data?.documents || [];
       setDocuments(Array.isArray(documentsData) ? documentsData : []);
@@ -49,29 +49,20 @@ const UploadATR = () => {
       setLoading(false);
     }
   };
-  
+
   const departments = [
     'E&T Department',
-    'Security Department', 
+    'Security Department',
     'Operation Department',
     'Survey Department',
-    'Safety Department'
+    'Safety Department',
+    'Admin',
+    'Super Admin'
   ];
 
-  const filteredDocuments = isAdmin && selectedDepartment !== 'all' 
+  const filteredDocuments = isAdmin && selectedDepartment !== 'all'
     ? documents.filter(doc => doc.department === selectedDepartment)
     : documents;
-
-  const getDepartmentColor = (department) => {
-    const colors = {
-      'E&T Department': '#3b82f6',
-      'Security Department': '#ef4444', 
-      'Operation Department': '#10b981',
-      'Survey Department': '#f59e0b',
-      'Safety Department': '#8b5cf6'
-    };
-    return colors[department] || '#6b7280';
-  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -124,10 +115,10 @@ const UploadATR = () => {
     try {
       setUploading(true);
       console.log('📤 Creating FormData...');
-      
+
       const formData = new FormData();
       formData.append('pdf', file);
-      
+
       console.log('📤 FormData created, making API call to /atr/upload (Railway deployment)');
       console.log('🔑 Auth token present:', !!localStorage.getItem('token'));
 
@@ -145,7 +136,7 @@ const UploadATR = () => {
       console.error('❌ Error response:', error.response?.data);
       console.error('❌ Error status:', error.response?.status);
       console.error('❌ Error headers:', error.response?.headers);
-      
+
       const errorMessage = error.response?.data?.error || 'Failed to upload document';
       console.log('❌ Showing error to user:', errorMessage);
       toast.error(errorMessage);
@@ -202,12 +193,12 @@ const UploadATR = () => {
     <div className="upload-atr-container">
       <div className="upload-atr-header">
         <h1>Upload ATR Documents</h1>
-        <p>Upload and manage ATR (Accident/Incident Report) documents for {user?.department || 'your department'}</p>
+        <p>Upload and manage ATR (Accident/Incident Report) documents for {user?.department || (isAdmin ? 'Admin' : 'your department')}</p>
       </div>
 
       {/* Upload Section */}
       <div className="upload-section">
-        <div 
+        <div
           className={`upload-dropzone ${dragActive ? 'drag-active' : ''} ${uploading ? 'uploading' : ''}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -250,8 +241,8 @@ const UploadATR = () => {
           </div>
           <div className="header-right">
             {isAdmin && (
-              <select 
-                value={selectedDepartment} 
+              <select
+                value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="department-filter"
               >
@@ -300,17 +291,12 @@ const UploadATR = () => {
                         <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
                     </td>
-                    <td>
-                      <span 
-                        className="department-badge" 
-                        style={{ backgroundColor: getDepartmentColor(doc.department) }}
-                      >
-                        {doc.department || 'N/A'}
-                      </span>
+                    <td className="department-cell">
+                      {doc.department || 'N/A'}
                     </td>
-                    <td>{doc.uploaded_by || 'Unknown'}</td>
-                    <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
-                    <td>{doc.file_size ? formatFileSize(doc.file_size) : 'N/A'}</td>
+                    <td className="uploaded-by-cell">{(doc.uploaded_by || 'Unknown').replace(/_/g, ' ')}</td>
+                    <td className="date-cell">{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
+                    <td className="size-cell">{doc.file_size ? formatFileSize(doc.file_size) : 'N/A'}</td>
                     <td className="actions-cell">
                       <button
                         onClick={() => handleView(doc.id)}

@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
 
     const newFeature = await database.get(
       'SELECT * FROM features WHERE id = ?',
-      [result.lastID]
+      [result.id]
     );
 
     res.json({
