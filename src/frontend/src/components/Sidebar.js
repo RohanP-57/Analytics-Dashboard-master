@@ -66,6 +66,7 @@ const Sidebar = () => {
           <div className="user-info">
             <div className="user-name">{user?.username || 'User'}</div>
             <div className="user-role">{user?.department || user?.role || 'User'}</div>
+            <Link to="/profile" className="user-profile-link">Profile</Link>
           </div>
         </div>
         <button onClick={logout} className="sidebar-logout" title="Sign out">

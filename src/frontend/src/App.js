@@ -14,7 +14,7 @@ import Features from './pages/Features';
 import Upload from './pages/Upload';
 import MapView from './pages/MapView';
 import TableView from './pages/TableView';
-import Profile from './pages/Profile';
+import ProfilePage from './pages/ProfilePage';
 import VideoLinks from './pages/VideoLinks';
 import Sites from './pages/Sites';
 import UploadATR from './pages/UploadATR';
@@ -102,9 +102,7 @@ function App() {
             } />
             <Route path="/profile" element={
               <ProtectedRoute>
-                <AdminRoute>
-                  <Profile />
-                </AdminRoute>
+                <ProfilePage />
               </ProtectedRoute>
             } />
             
