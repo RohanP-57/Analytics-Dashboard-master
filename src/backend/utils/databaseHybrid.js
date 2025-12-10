@@ -47,9 +47,13 @@ class HybridDatabase {
 
   initPostgreSQL() {
     try {
+      console.log('🔄 Configuring PostgreSQL connection...');
       this.pgPool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        ssl: {
+          rejectUnauthorized: false,
+          sslmode: 'require'
+        }
       });
 
       this.pgPool.on('error', (err) => {
@@ -57,10 +61,29 @@ class HybridDatabase {
       });
 
       this.usePostgres = true;
-      console.log('✅ Connected to PostgreSQL database (users, ATR documents)');
-      this.createPostgresTables();
+      console.log('✅ PostgreSQL pool created, testing connection...');
+      
+      // Test the connection and create tables
+      this.testConnectionAndCreateTables();
     } catch (error) {
       console.error('❌ PostgreSQL initialization failed:', error);
+      console.error('❌ Error details:', error.message);
+      this.usePostgres = false;
+    }
+  }
+
+  async testConnectionAndCreateTables() {
+    try {
+      console.log('🔄 Testing PostgreSQL connection...');
+      const client = await this.pgPool.connect();
+      console.log('✅ PostgreSQL connection successful!');
+      client.release();
+      
+      // Now create tables
+      await this.createPostgresTables();
+    } catch (error) {
+      console.error('❌ PostgreSQL connection test failed:', error);
+      console.error('❌ Falling back to SQLite for all tables');
       this.usePostgres = false;
     }
   }
