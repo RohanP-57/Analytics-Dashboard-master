@@ -16,12 +16,19 @@ class HybridDatabase {
   }
 
   init() {
+    console.log('🔍 HYBRID DATABASE INIT');
+    console.log('🔍 DATABASE_URL present:', !!process.env.DATABASE_URL);
+    console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+    
     // Always initialize SQLite for violations
     this.initSQLite();
 
     // Initialize PostgreSQL if available (for users and ATR)
     if (process.env.DATABASE_URL) {
+      console.log('🔄 Initializing PostgreSQL for users and ATR documents...');
       this.initPostgreSQL();
+    } else {
+      console.log('⚠️ No DATABASE_URL found - using SQLite for everything');
     }
   }
 
@@ -59,12 +66,15 @@ class HybridDatabase {
   }
 
   async createPostgresTables() {
+    console.log('🔄 Creating PostgreSQL tables...');
     const client = await this.pgPool.connect();
     
     try {
       await client.query('BEGIN');
+      console.log('✅ PostgreSQL transaction started');
 
       // Admin table
+      console.log('🔄 Creating admin table...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS admin (
           id SERIAL PRIMARY KEY,
@@ -76,8 +86,10 @@ class HybridDatabase {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      console.log('✅ Admin table created');
 
       // User table
+      console.log('🔄 Creating user table...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS "user" (
           id SERIAL PRIMARY KEY,
@@ -90,8 +102,10 @@ class HybridDatabase {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      console.log('✅ User table created');
 
       // ATR documents table
+      console.log('🔄 Creating atr_documents table...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS atr_documents (
           id SERIAL PRIMARY KEY,
@@ -104,12 +118,15 @@ class HybridDatabase {
           upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      console.log('✅ ATR documents table created');
 
       await client.query('COMMIT');
-      console.log('✅ PostgreSQL tables created (users, ATR)');
+      console.log('✅ PostgreSQL tables created successfully (admin, user, atr_documents)');
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('❌ Error creating PostgreSQL tables:', error);
+      console.error('❌ Error details:', error.message);
+      throw error;
     } finally {
       client.release();
     }
