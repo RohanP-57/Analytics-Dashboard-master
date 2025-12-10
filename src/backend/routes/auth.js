@@ -138,4 +138,93 @@ router.post('/logout', authenticateToken, (req, res) => {
   res.json({ message: 'Logout successful' });
 });
 
+// Get all users (admin only) - for Profile page
+router.get('/users', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Admin only.' });
+    }
+
+    const users = await User.findAll();
+    
+    res.json({
+      success: true,
+      users: users
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Update own name (admin only) - for Profile page
+router.patch('/update-name', authenticateToken, async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Admin only.' });
+    }
+
+    // Validate username
+    if (!username || username.trim().length === 0) {
+      return res.status(400).json({ error: 'Username cannot be empty' });
+    }
+
+    // Check if username already exists
+    const existingUser = await User.findByUsername(username.trim());
+    if (existingUser && existingUser.id !== req.user.userId) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Update username
+    await User.updateUsername(req.user.userId, username.trim());
+
+    res.json({
+      success: true,
+      message: 'Username updated successfully'
+    });
+  } catch (error) {
+    console.error('Update name error:', error);
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
+// Update any user's name (admin only) - for Profile page
+router.patch('/update-user-name/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username } = req.body;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Admin only.' });
+    }
+
+    // Validate username
+    if (!username || username.trim().length === 0) {
+      return res.status(400).json({ error: 'Username cannot be empty' });
+    }
+
+    // Check if username already exists
+    const existingUser = await User.findByUsername(username.trim());
+    if (existingUser && existingUser.id !== parseInt(id)) {
+      return res.status(400).json({ error: 'Username already exists' });
+    }
+
+    // Update username
+    await User.updateUsername(id, username.trim());
+
+    res.json({
+      success: true,
+      message: 'Username updated successfully'
+    });
+  } catch (error) {
+    console.error('Update user name error:', error);
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
 module.exports = router;

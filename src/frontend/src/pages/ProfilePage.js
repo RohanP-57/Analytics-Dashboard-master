@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Edit2, Users } from 'lucide-react';
 import EditNameModal from '../components/EditNameModal';
-import { usersAPI } from '../services/api';
+import api from '../services/api';
 import '../styles/ProfilePage.css';
 
 const ProfilePage = () => {
@@ -26,7 +26,8 @@ const ProfilePage = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await usersAPI.getUsers();
+      // Direct API call without using users routes
+      const response = await api.get('/auth/users');
       setUsers(response.data.users || []);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -43,10 +44,11 @@ const ProfilePage = () => {
 
   const handleEditSave = async (newName) => {
     try {
+      // Direct API call without using users routes
       if (editingUser.id === user.id) {
-        await usersAPI.updateOwnName(newName);
+        await api.patch('/auth/update-name', { username: newName });
       } else {
-        await usersAPI.updateUserName(editingUser.id, newName);
+        await api.patch(`/auth/update-user-name/${editingUser.id}`, { username: newName });
       }
 
       // Refresh users list
