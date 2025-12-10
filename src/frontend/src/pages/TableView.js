@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, ArrowUpDown, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { violationsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import './TableView.css';
 
 // Image component that uses backend proxy for Google Drive images (same as MapView)
 const ImageWithFallback = ({ src, alt, className }) => {
@@ -256,8 +257,8 @@ const TableView = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fadeIn">
+      <div className="flex items-center justify-between animate-slideDown">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Violations Table</h1>
           <p className="text-gray-600 mt-1">
@@ -266,7 +267,7 @@ const TableView = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-soft p-6 card-hover animate-slideUp custom-scrollbar">
         <div className="space-y-4 mb-6">
           {/* Search Bar */}
           <div className="relative">
@@ -359,9 +360,49 @@ const TableView = () => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <span className="ml-2 text-gray-600">Loading violations...</span>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drone ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Violation Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coordinates</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {[...Array(5)].map((_, index) => (
+                  <tr key={index} className="animate-pulse">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-20"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-6 bg-gray-200 rounded-full w-32"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-28"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-8 bg-gray-200 rounded w-16"></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <>
@@ -390,38 +431,54 @@ const TableView = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {violations.map((violation) => (
-                    <tr key={violation.id} className="hover:bg-gray-50">
+                  {violations.map((violation, index) => (
+                    <tr 
+                      key={violation.id} 
+                      className="hover:bg-blue-50 transition-all duration-200 hover:shadow-sm animate-fadeIn"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {violation.drone_id}
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span>{violation.drone_id}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getViolationTypeColor(violation.type)}`}>
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getViolationTypeColor(violation.type)} transition-all duration-200 hover:scale-105`}>
                           {formatViolationType(violation.type)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {violation.location}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div>
-                          <div className="font-medium">{violation.date}</div>
-                          <div className="text-gray-500">{violation.timestamp}</div>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-gray-400">📍</span>
+                          <span>{violation.location}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="font-mono text-xs">
-                          <div>{violation.latitude.toFixed(6)}</div>
-                          <div>{violation.longitude.toFixed(6)}</div>
+                        <div>
+                          <div className="font-medium flex items-center space-x-1">
+                            <span className="text-gray-400">📅</span>
+                            <span>{violation.date}</span>
+                          </div>
+                          <div className="text-gray-500 flex items-center space-x-1 mt-1">
+                            <span className="text-gray-400">🕐</span>
+                            <span>{violation.timestamp}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="font-mono text-xs bg-gray-50 px-2 py-1 rounded">
+                          <div className="text-gray-600">Lat: {violation.latitude.toFixed(6)}</div>
+                          <div className="text-gray-600">Lng: {violation.longitude.toFixed(6)}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => setSelectedViolation(violation)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors flex items-center space-x-1"
+                          className="group flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 hover:shadow-md"
                         >
-                          <Eye className="h-4 w-4" />
-                          <span>View</span>
+                          <Eye className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">View</span>
                         </button>
                       </td>
                     </tr>
@@ -472,14 +529,17 @@ const TableView = () => {
       </div>
 
       {selectedViolation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn backdrop-blur-sm">
+          <div className="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp">
             <div className="p-8">
               <div className="flex justify-between items-start mb-6">
-                <h3 className="text-2xl font-semibold text-gray-900">Violation Details</h3>
+                <h3 className="text-2xl font-semibold text-gray-900 flex items-center space-x-2">
+                  <span className="text-3xl">🔍</span>
+                  <span>Violation Details</span>
+                </h3>
                 <button
                   onClick={() => setSelectedViolation(null)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 hover:rotate-90"
                 >
                   ✕
                 </button>
