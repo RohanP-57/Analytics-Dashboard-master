@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Edit2, Users } from 'lucide-react';
 import EditNameModal from '../components/EditNameModal';
+import { usersAPI } from '../services/api';
 import '../styles/ProfilePage.css';
 
 const ProfilePage = () => {
@@ -25,19 +26,8 @@ const ProfilePage = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/users/list`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
-      setUsers(data.users || []);
+      const response = await usersAPI.getUsers();
+      setUsers(response.data.users || []);
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to load users');
@@ -53,22 +43,10 @@ const ProfilePage = () => {
 
   const handleEditSave = async (newName) => {
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = editingUser.id === user.id 
-        ? '/api/users/profile/name'
-        : `/api/users/${editingUser.id}/name`;
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}${endpoint}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username: newName })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update name');
+      if (editingUser.id === user.id) {
+        await usersAPI.updateOwnName(newName);
+      } else {
+        await usersAPI.updateUserName(editingUser.id, newName);
       }
 
       // Refresh users list

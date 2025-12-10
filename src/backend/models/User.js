@@ -224,6 +224,142 @@ class UserModel {
       throw new Error(`Database error: ${err.message}`);
     }
   }
+
+  // Alias for getUserById (used by routes)
+  async findById(userId, userType = null) {
+    return await this.getUserById(userId, userType);
+  }
+
+  // Find all users from all tables
+  async findAll() {
+    try {
+      const users = [];
+
+      // Get admin users
+      const admins = await database.all(
+        'SELECT id, username, email, full_name, permissions, created_at FROM admin'
+      );
+      admins.forEach(admin => {
+        users.push({
+          id: admin.id,
+          username: admin.username,
+          email: admin.email,
+          fullName: admin.full_name || admin.username,
+          role: 'admin',
+          userType: 'admin',
+          permissions: admin.permissions || 'all',
+          department: null,
+          created_at: admin.created_at
+        });
+      });
+
+      // Get regular users
+      const regularUsers = await database.all(
+        'SELECT id, username, email, full_name, department, access_level, created_at FROM "user"'
+      );
+      regularUsers.forEach(u => {
+        users.push({
+          id: u.id,
+          username: u.username,
+          email: u.email,
+          fullName: u.full_name || u.username,
+          role: 'user',
+          userType: 'user',
+          permissions: u.access_level || 'basic',
+          department: u.department,
+          created_at: u.created_at
+        });
+      });
+
+      return users;
+    } catch (err) {
+      throw new Error(`Database error: ${err.message}`);
+    }
+  }
+
+  // Find user by username
+  async findByUsername(username) {
+    try {
+      // Check admin table
+      let user = await database.get(
+        'SELECT id, username, email, full_name, permissions, created_at FROM admin WHERE username = ?',
+        [username]
+      );
+      if (user) {
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.full_name || user.username,
+          role: 'admin',
+          userType: 'admin',
+          permissions: user.permissions || 'all',
+          department: null,
+          created_at: user.created_at
+        };
+      }
+
+      // Check user table
+      user = await database.get(
+        'SELECT id, username, email, full_name, department, access_level, created_at FROM "user" WHERE username = ?',
+        [username]
+      );
+      if (user) {
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.full_name || user.username,
+          role: 'user',
+          userType: 'user',
+          permissions: user.access_level || 'basic',
+          department: user.department,
+          created_at: user.created_at
+        };
+      }
+
+      return null;
+    } catch (err) {
+      throw new Error(`Database error: ${err.message}`);
+    }
+  }
+
+  // Update username in appropriate table
+  async updateUsername(userId, username) {
+    try {
+      // Try to find user in admin table first
+      const adminUser = await database.get(
+        'SELECT id FROM admin WHERE id = ?',
+        [userId]
+      );
+
+      if (adminUser) {
+        await database.run(
+          'UPDATE admin SET username = ? WHERE id = ?',
+          [username, userId]
+        );
+        return;
+      }
+
+      // Try user table
+      const regularUser = await database.get(
+        'SELECT id FROM "user" WHERE id = ?',
+        [userId]
+      );
+
+      if (regularUser) {
+        await database.run(
+          'UPDATE "user" SET username = ? WHERE id = ?',
+          [username, userId]
+        );
+        return;
+      }
+
+      throw new Error('User not found');
+    } catch (err) {
+      throw new Error(`Database error: ${err.message}`);
+    }
+  }
 }
 
 module.exports = new UserModel();

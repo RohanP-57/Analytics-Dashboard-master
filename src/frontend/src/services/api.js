@@ -90,4 +90,11 @@ export const healthAPI = {
   check: () => api.get('/health'),
 };
 
+export const usersAPI = {
+  getProfile: () => api.get('/users/profile'),
+  getUsers: () => api.get('/users/list'),
+  updateUserName: (id, username) => api.patch(`/users/${id}/name`, { username }),
+  updateOwnName: (username) => api.patch('/users/profile/name', { username })
+};
+
 export default api; 
