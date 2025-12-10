@@ -4,7 +4,7 @@ import KPICard from '../components/KPICard';
 import { PieChart, LineChart, BarChart } from '../components/Charts';
 import { analyticsAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const [kpis, setKpis] = useState({});

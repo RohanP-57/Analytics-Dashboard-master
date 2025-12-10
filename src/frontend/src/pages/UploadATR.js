@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Upload, Link as LinkIcon, Edit2, X, Check, FileText } from 'lucide-react';
-import './UploadATR.css';
+import { Eye, Trash2, Upload } from 'lucide-react';
+import UploadModal from '../components/UploadModal';
+import DetailsModal from '../components/DetailsModal';
+import '../styles/UploadATR.css';
 
 const UploadATR = () => {
   const { user } = useAuth();
@@ -12,15 +14,20 @@ const UploadATR = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadComment, setUploadComment] = useState('');
-  const [uploadHyperlink, setUploadHyperlink] = useState('');
-  const [dragActive, setDragActive] = useState(false);
-  const [editingComment, setEditingComment] = useState(null);
-  const [editingHyperlink, setEditingHyperlink] = useState(null);
-  const [editValues, setEditValues] = useState({});
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
+
+  const departments = [
+    'E&T Department',
+    'Security Department',
+    'Operation Department',
+    'Survey Department',
+    'Safety Department',
+    'Admin',
+    'Super Admin'
+  ];
 
   useEffect(() => {
     fetchDocuments();
@@ -51,65 +58,36 @@ const UploadATR = () => {
     }
   };
 
-  const departments = [
-    'E&T Department',
-    'Security Department',
-    'Operation Department',
-    'Survey Department',
-    'Safety Department',
-    'Admin',
-    'Super Admin'
-  ];
-
   const filteredDocuments = isAdmin && selectedDepartment !== 'all'
     ? documents.filter(doc => doc.department === selectedDepartment)
     : documents;
 
-  // Modal drag and drop handlers
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
+  const isValidUrl = (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setUploadFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!uploadFile) {
+  const handleUpload = async ({ file, comment, hyperlink }) => {
+    if (!file) {
       toast.error('Please select a PDF file');
       return;
     }
 
-    if (uploadFile.type !== 'application/pdf') {
+    if (file.type !== 'application/pdf') {
       toast.error('Please select a PDF file');
       return;
     }
 
-    if (uploadFile.size > 25 * 1024 * 1024) {
+    if (file.size > 25 * 1024 * 1024) {
       toast.error('File size must be less than 25MB');
       return;
     }
 
-    // Validate hyperlink if provided
-    if (uploadHyperlink && !isValidUrl(uploadHyperlink)) {
+    if (hyperlink && !isValidUrl(hyperlink)) {
       toast.error('Please enter a valid URL for the hyperlink');
       return;
     }
@@ -118,9 +96,9 @@ const UploadATR = () => {
       setUploading(true);
 
       const formData = new FormData();
-      formData.append('pdf', uploadFile);
-      if (uploadComment) formData.append('comment', uploadComment);
-      if (uploadHyperlink) formData.append('hyperlink', uploadHyperlink);
+      formData.append('pdf', file);
+      if (comment) formData.append('comment', comment);
+      if (hyperlink) formData.append('hyperlink', hyperlink);
 
       await api.post('/atr/upload', formData, {
         headers: {
@@ -130,9 +108,6 @@ const UploadATR = () => {
 
       toast.success('AI Report uploaded successfully!');
       setShowUploadModal(false);
-      setUploadFile(null);
-      setUploadComment('');
-      setUploadHyperlink('');
       fetchDocuments();
     } catch (error) {
       console.error('Upload error:', error);
@@ -168,35 +143,90 @@ const UploadATR = () => {
     }
   };
 
-  const handleUpdateComment = async (documentId) => {
+  const openDetailsModal = (doc) => {
+    setSelectedDocument(doc);
+    setShowDetailsModal(true);
+  };
+
+  const closeDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedDocument(null);
+  };
+
+  const handleUpdateComment = async (documentId, comment) => {
     try {
-      const comment = editValues[`comment_${documentId}`] || '';
       await api.patch(`/atr/${documentId}/comment`, { comment });
       toast.success('Comment updated');
-      setEditingComment(null);
       fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
     } catch (error) {
       console.error('Update comment error:', error);
       toast.error('Failed to update comment');
     }
   };
 
-  const handleUpdateHyperlink = async (documentId) => {
-    try {
-      const hyperlink = editValues[`hyperlink_${documentId}`] || '';
-      
-      if (hyperlink && !isValidUrl(hyperlink)) {
-        toast.error('Please enter a valid URL');
-        return;
-      }
+  const handleUpdateHyperlink = async (documentId, hyperlink) => {
+    if (hyperlink && !isValidUrl(hyperlink)) {
+      toast.error('Please enter a valid URL');
+      return;
+    }
 
+    try {
       await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink });
       toast.success('Hyperlink updated');
-      setEditingHyperlink(null);
       fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
     } catch (error) {
       console.error('Update hyperlink error:', error);
       toast.error('Failed to update hyperlink');
+    }
+  };
+
+  const handleDeleteComment = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      await api.patch(`/atr/${documentId}/comment`, { comment: '' });
+      toast.success('Comment deleted');
+      fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      toast.error('Failed to delete comment');
+    }
+  };
+
+  const handleDeleteHyperlink = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this hyperlink?')) return;
+
+    try {
+      await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink: '' });
+      toast.success('Hyperlink deleted');
+      fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Delete hyperlink error:', error);
+      toast.error('Failed to delete hyperlink');
     }
   };
 
@@ -225,6 +255,12 @@ const UploadATR = () => {
 
       toast.success('AI Report PDF uploaded successfully!');
       fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
     } catch (error) {
       console.error('Upload AI Report error:', error);
       toast.error('Failed to upload AI Report');
@@ -238,56 +274,21 @@ const UploadATR = () => {
   };
 
   const handleDeleteAiReport = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this AI Report?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this AI Report?')) return;
 
     try {
       await api.delete(`/atr/${documentId}/ai-report`);
-      toast.success('AI Report deleted successfully');
+      toast.success('AI Report deleted');
       fetchDocuments();
+      // Update selected document
+      const response = await api.get('/atr/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
     } catch (error) {
       console.error('Delete AI Report error:', error);
       toast.error('Failed to delete AI Report');
-    }
-  };
-
-  const handleDeleteComment = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) {
-      return;
-    }
-
-    try {
-      await api.patch(`/atr/${documentId}/comment`, { comment: '' });
-      toast.success('Comment deleted successfully');
-      fetchDocuments();
-    } catch (error) {
-      console.error('Delete comment error:', error);
-      toast.error('Failed to delete comment');
-    }
-  };
-
-  const handleDeleteHyperlink = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this hyperlink?')) {
-      return;
-    }
-
-    try {
-      await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink: '' });
-      toast.success('Hyperlink deleted successfully');
-      fetchDocuments();
-    } catch (error) {
-      console.error('Delete hyperlink error:', error);
-      toast.error('Failed to delete hyperlink');
-    }
-  };
-
-  const isValidUrl = (string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
     }
   };
 
@@ -327,117 +328,12 @@ const UploadATR = () => {
       </div>
 
       {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="modal-overlay" onClick={() => !uploading && setShowUploadModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Upload AI Report</h2>
-              <button 
-                className="modal-close"
-                onClick={() => setShowUploadModal(false)}
-                disabled={uploading}
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {/* File Drop Zone */}
-              <div
-                className={`modal-dropzone ${dragActive ? 'drag-active' : ''}`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                {uploadFile ? (
-                  <div className="file-selected">
-                    <FileText size={48} />
-                    <p className="file-name">{uploadFile.name}</p>
-                    <p className="file-size">{formatFileSize(uploadFile.size)}</p>
-                    <button 
-                      className="change-file-button"
-                      onClick={() => setUploadFile(null)}
-                    >
-                      Change File
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="upload-icon">📄</div>
-                    <h3>Drop PDF file here or click to browse</h3>
-                    <p>Maximum file size: 25MB</p>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileSelect}
-                      className="file-input"
-                      id="modal-file-input"
-                    />
-                    <label htmlFor="modal-file-input" className="browse-button">
-                      Browse Files
-                    </label>
-                  </>
-                )}
-              </div>
-
-              {/* Comment Field */}
-              <div className="form-group">
-                <label htmlFor="upload-comment">Comment (Optional)</label>
-                <textarea
-                  id="upload-comment"
-                  value={uploadComment}
-                  onChange={(e) => setUploadComment(e.target.value)}
-                  placeholder="Add a comment about this report..."
-                  maxLength={500}
-                  rows={3}
-                />
-                <span className="char-count">{uploadComment.length}/500</span>
-              </div>
-
-              {/* Hyperlink Field */}
-              <div className="form-group">
-                <label htmlFor="upload-hyperlink">Hyperlink (Optional)</label>
-                <input
-                  type="url"
-                  id="upload-hyperlink"
-                  value={uploadHyperlink}
-                  onChange={(e) => setUploadHyperlink(e.target.value)}
-                  placeholder="https://drive.google.com/..."
-                />
-                <span className="field-hint">Google Drive link or any URL</span>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button 
-                className="cancel-button"
-                onClick={() => setShowUploadModal(false)}
-                disabled={uploading}
-              >
-                Cancel
-              </button>
-              <button 
-                className="upload-button"
-                onClick={handleUpload}
-                disabled={uploading || !uploadFile}
-              >
-                {uploading ? (
-                  <>
-                    <div className="spinner-small"></div>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload size={18} />
-                    Upload
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <UploadModal
+        showModal={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleUpload}
+        uploading={uploading}
+      />
 
       {/* Documents List */}
       <div className="documents-section">
@@ -488,9 +384,7 @@ const UploadATR = () => {
                   <th>Uploaded By</th>
                   <th>Upload Date</th>
                   <th>File Size</th>
-                  <th>Comment</th>
-                  <th>AI Report</th>
-                  <th>Hyperlink</th>
+                  <th>Details</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -508,188 +402,22 @@ const UploadATR = () => {
                     <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
                     <td>{doc.file_size ? formatFileSize(doc.file_size) : 'N/A'}</td>
                     
-                    {/* Comment Column */}
-                    <td className="comment-cell">
-                      {editingComment === doc.id ? (
-                        <div className="edit-field">
-                          <input
-                            type="text"
-                            value={editValues[`comment_${doc.id}`] ?? doc.comment ?? ''}
-                            onChange={(e) => setEditValues({...editValues, [`comment_${doc.id}`]: e.target.value})}
-                            maxLength={500}
-                            autoFocus
-                          />
-                          <button 
-                            className="icon-button save"
-                            onClick={() => handleUpdateComment(doc.id)}
-                            title="Save"
-                          >
-                            <Check size={16} />
-                          </button>
-                          <button 
-                            className="icon-button cancel"
-                            onClick={() => setEditingComment(null)}
-                            title="Cancel"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="view-field">
-                          <span className="field-value">{doc.comment || '-'}</span>
-                          {doc.canEdit && doc.comment && (
-                            <>
-                              <button 
-                                className="icon-button edit"
-                                onClick={() => {
-                                  setEditingComment(doc.id);
-                                  setEditValues({...editValues, [`comment_${doc.id}`]: doc.comment || ''});
-                                }}
-                                title="Edit comment"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button 
-                                className="icon-button delete"
-                                onClick={() => handleDeleteComment(doc.id)}
-                                title="Delete comment"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </>
-                          )}
-                          {doc.canEdit && !doc.comment && (
-                            <button 
-                              className="icon-button edit"
-                              onClick={() => {
-                                setEditingComment(doc.id);
-                                setEditValues({...editValues, [`comment_${doc.id}`]: ''});
-                              }}
-                              title="Add comment"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* AI Report Column */}
-                    <td className="ai-report-cell">
-                      {doc.ai_report_url ? (
-                        <div className="ai-report-actions">
-                          <button 
-                            className="icon-button view"
-                            onClick={() => handleViewAiReport(doc.ai_report_url)}
-                            title="View AI Report"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          {doc.canEdit && (
-                            <button 
-                              className="icon-button delete"
-                              onClick={() => handleDeleteAiReport(doc.id)}
-                              title="Delete AI Report"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      ) : doc.canEdit ? (
-                        <label className="upload-ai-report-label">
-                          <input
-                            type="file"
-                            accept=".pdf"
-                            onChange={(e) => e.target.files[0] && handleUploadAiReport(doc.id, e.target.files[0])}
-                            style={{ display: 'none' }}
-                          />
-                          <Upload size={18} />
-                        </label>
-                      ) : (
-                        <span>-</span>
-                      )}
-                    </td>
-
-                    {/* Hyperlink Column */}
-                    <td className="hyperlink-cell">
-                      {editingHyperlink === doc.id ? (
-                        <div className="edit-field">
-                          <input
-                            type="url"
-                            value={editValues[`hyperlink_${doc.id}`] ?? doc.hyperlink ?? ''}
-                            onChange={(e) => setEditValues({...editValues, [`hyperlink_${doc.id}`]: e.target.value})}
-                            placeholder="https://..."
-                            autoFocus
-                          />
-                          <button 
-                            className="icon-button save"
-                            onClick={() => handleUpdateHyperlink(doc.id)}
-                            title="Save"
-                          >
-                            <Check size={16} />
-                          </button>
-                          <button 
-                            className="icon-button cancel"
-                            onClick={() => setEditingHyperlink(null)}
-                            title="Cancel"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="view-field">
-                          {doc.hyperlink ? (
-                            <>
-                              <a 
-                                href={doc.hyperlink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="hyperlink-icon"
-                                title={doc.hyperlink}
-                              >
-                                <LinkIcon size={18} />
-                              </a>
-                              {doc.canEdit && (
-                                <>
-                                  <button 
-                                    className="icon-button edit"
-                                    onClick={() => {
-                                      setEditingHyperlink(doc.id);
-                                      setEditValues({...editValues, [`hyperlink_${doc.id}`]: doc.hyperlink || ''});
-                                    }}
-                                    title="Edit hyperlink"
-                                  >
-                                    <Edit2 size={14} />
-                                  </button>
-                                  <button 
-                                    className="icon-button delete"
-                                    onClick={() => handleDeleteHyperlink(doc.id)}
-                                    title="Delete hyperlink"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <span>-</span>
-                              {doc.canEdit && (
-                                <button 
-                                  className="icon-button edit"
-                                  onClick={() => {
-                                    setEditingHyperlink(doc.id);
-                                    setEditValues({...editValues, [`hyperlink_${doc.id}`]: ''});
-                                  }}
-                                  title="Add hyperlink"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                    {/* Details Column with Badges */}
+                    <td className="details-cell">
+                      <div className="details-badges">
+                        {doc.comment && <span className="badge comment-badge" title="Has comment">💬</span>}
+                        {doc.ai_report_url && <span className="badge ai-report-badge" title="Has AI report">📊</span>}
+                        {doc.hyperlink && <span className="badge hyperlink-badge" title="Has hyperlink">🔗</span>}
+                        {!doc.comment && !doc.ai_report_url && !doc.hyperlink && <span className="no-details">-</span>}
+                      </div>
+                      <button
+                        onClick={() => openDetailsModal(doc)}
+                        className="details-button"
+                        title="View/Edit Details"
+                      >
+                        <Eye size={16} />
+                        <span>Details</span>
+                      </button>
                     </td>
 
                     {/* Actions Column */}
@@ -718,6 +446,20 @@ const UploadATR = () => {
           </div>
         )}
       </div>
+
+      {/* Details Modal */}
+      <DetailsModal
+        show={showDetailsModal}
+        document={selectedDocument}
+        onClose={closeDetailsModal}
+        onUpdateComment={handleUpdateComment}
+        onUpdateHyperlink={handleUpdateHyperlink}
+        onDeleteComment={handleDeleteComment}
+        onDeleteHyperlink={handleDeleteHyperlink}
+        onUploadAiReport={handleUploadAiReport}
+        onDeleteAiReport={handleDeleteAiReport}
+        onViewAiReport={handleViewAiReport}
+      />
     </div>
   );
 };

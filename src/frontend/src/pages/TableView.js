@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, ArrowUpDown, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { violationsAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import './TableView.css';
+import '../styles/TableView.css';
 
 // Image component that uses backend proxy for Google Drive images (same as MapView)
 const ImageWithFallback = ({ src, alt, className }) => {

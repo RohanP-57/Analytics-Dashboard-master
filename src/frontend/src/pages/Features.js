@@ -3,7 +3,7 @@ import { Search, Plus, BarChart3, AlertTriangle, Eye, X } from 'lucide-react';
 import { featuresAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import './Features.css';
+import '../styles/Features.css';
 
 const Features = () => {
   const { user } = useAuth();

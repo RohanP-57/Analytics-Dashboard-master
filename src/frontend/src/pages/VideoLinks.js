@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, ExternalLink, Video, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sitesAPI } from '../services/api';
-import './VideoLinks.css';
+import '../styles/VideoLinks.css';
 
 const VideoLinks = () => {
   const [videoLinks, setVideoLinks] = useState([]);

@@ -5,7 +5,7 @@ import { violationsAPI, boundariesAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import './MapView.css';
+import '../styles/MapView.css';
 
 // Simple image component that works with Google Drive through backend proxy
 const ImageWithFallback = ({ src, alt, className }) => {

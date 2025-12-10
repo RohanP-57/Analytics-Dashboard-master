@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Video } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { sitesAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import './Sites.css';
+import '../styles/Sites.css';
 
 const Sites = () => {
   const { user } = useAuth();
