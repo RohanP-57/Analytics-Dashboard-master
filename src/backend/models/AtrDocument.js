@@ -1,4 +1,4 @@
-const database = require('../utils/database');
+const database = require('../utils/databaseHybrid');
 
 class AtrDocumentModel {
   async createDocument(documentData) {
@@ -36,9 +36,11 @@ class AtrDocumentModel {
   async getDocumentsByDepartment(department) {
     try {
       const documents = await database.all(
-        `SELECT ad.*, u.username as uploaded_by_name 
+        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date, 
+                u.username as uploaded_by_name 
          FROM atr_documents ad 
-         LEFT JOIN user u ON ad.uploaded_by = u.id 
+         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
          WHERE ad.department = ? 
          ORDER BY ad.upload_date DESC`,
         [department]
@@ -52,9 +54,11 @@ class AtrDocumentModel {
   async getAllDocuments() {
     try {
       const documents = await database.all(
-        `SELECT ad.*, u.username as uploaded_by_name 
+        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date, 
+                u.username as uploaded_by_name 
          FROM atr_documents ad 
-         LEFT JOIN user u ON ad.uploaded_by = u.id 
+         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
          ORDER BY ad.upload_date DESC`
       );
       return documents;
@@ -66,9 +70,11 @@ class AtrDocumentModel {
   async getDocumentById(id) {
     try {
       const document = await database.get(
-        `SELECT ad.*, u.username as uploaded_by_name 
+        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date, 
+                u.username as uploaded_by_name 
          FROM atr_documents ad 
-         LEFT JOIN user u ON ad.uploaded_by = u.id 
+         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
          WHERE ad.id = ?`,
         [id]
       );
