@@ -48,12 +48,14 @@ class HybridDatabase {
   initPostgreSQL() {
     try {
       console.log('🔄 Configuring PostgreSQL connection...');
+      console.log('🔍 DATABASE_URL format:', process.env.DATABASE_URL ? 'present' : 'missing');
+      
       this.pgPool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false,
-          sslmode: 'require'
-        }
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
       });
 
       this.pgPool.on('error', (err) => {
@@ -82,10 +84,76 @@ class HybridDatabase {
       // Now create tables
       await this.createPostgresTables();
     } catch (error) {
-      console.error('❌ PostgreSQL connection test failed:', error);
-      console.error('❌ Falling back to SQLite for all tables');
+      console.error('❌ PostgreSQL connection test failed:', error.message);
+      console.error('❌ Falling back to SQLite for all tables (this is safe!)');
       this.usePostgres = false;
+      
+      // Close the failed pool
+      if (this.pgPool) {
+        try {
+          await this.pgPool.end();
+        } catch (closeError) {
+          console.error('Error closing failed PostgreSQL pool:', closeError.message);
+        }
+      }
+      
+      // Create user tables in SQLite as fallback
+      this.createSQLiteUserTables();
     }
+  }
+
+  createSQLiteUserTables() {
+    console.log('🔄 Creating user tables in SQLite (fallback mode)...');
+    
+    // Admin table in SQLite
+    this.sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS admin (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT,
+        permissions TEXT DEFAULT 'all',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `, (err) => {
+      if (err) console.error('Error creating admin table in SQLite:', err);
+      else console.log('✅ Admin table ready (SQLite fallback)');
+    });
+
+    // User table in SQLite
+    this.sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS "user" (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT,
+        department TEXT,
+        access_level TEXT DEFAULT 'basic',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `, (err) => {
+      if (err) console.error('Error creating user table in SQLite:', err);
+      else console.log('✅ User table ready (SQLite fallback)');
+    });
+
+    // ATR documents table in SQLite
+    this.sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS atr_documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        cloudinary_url TEXT NOT NULL,
+        cloudinary_public_id TEXT NOT NULL,
+        department TEXT NOT NULL,
+        uploaded_by INTEGER NOT NULL,
+        file_size INTEGER,
+        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `, (err) => {
+      if (err) console.error('Error creating atr_documents table in SQLite:', err);
+      else console.log('✅ ATR documents table ready (SQLite fallback)');
+    });
   }
 
   async createPostgresTables() {
