@@ -338,7 +338,7 @@ app.use((error, req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Analytics Dashboard API ready`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -350,6 +350,14 @@ app.listen(PORT, '0.0.0.0', () => {
   }
   
   console.log('Ready to receive real violation data via /api/upload endpoints.');
+  
+  // Run auto-migration for ATR table
+  try {
+    const autoMigrate = require('./scripts/autoMigrate');
+    await autoMigrate();
+  } catch (error) {
+    console.error('⚠️ Auto-migration failed (non-critical):', error.message);
+  }
 });
 
 // Graceful shutdown for Railway
