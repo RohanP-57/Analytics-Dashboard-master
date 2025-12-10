@@ -84,6 +84,9 @@ class HybridDatabase {
       
       // Now create tables
       await this.createPostgresTables();
+      
+      // Auto-setup users if tables are empty
+      await this.autoSetupUsers();
     } catch (error) {
       console.error('❌ PostgreSQL connection test failed:', error.message);
       console.error('❌ Falling back to SQLite for all tables (this is safe!)');
@@ -100,6 +103,75 @@ class HybridDatabase {
       
       // Create user tables in SQLite as fallback
       this.createSQLiteUserTables();
+    }
+  }
+
+  async autoSetupUsers() {
+    try {
+      console.log('🔄 Checking if users need to be created...');
+      const bcrypt = require('bcryptjs');
+      
+      // Check if any admin exists
+      const adminCount = await this.get('SELECT COUNT(*) as count FROM admin', []);
+      
+      if (adminCount && adminCount.count > 0) {
+        console.log('✅ Users already exist, skipping auto-setup');
+        return;
+      }
+      
+      console.log('🔄 No users found, creating default users...');
+      
+      // Admin users
+      const adminUsers = [
+        { username: 'Admin', email: 'admin1@ccl.com', password: 'Aerovania_grhns@2002', full_name: 'Aerovania Master', permissions: 'all' },
+        { username: 'Admin', email: 'superadmin1@ccl.com', password: 'Super_Aerovania_grhns@2002', full_name: 'Super Aerovania Master', permissions: 'all' }
+      ];
+      
+      // Department users
+      const departmentUsers = [
+        { username: 'et_department', email: 'et@ccl.com', password: 'deptet123', full_name: 'E&T Department User', department: 'E&T Department', access_level: 'basic' },
+        { username: 'security_department', email: 'security@ccl.com', password: 'deptsecurity123', full_name: 'Security Department User', department: 'Security Department', access_level: 'basic' },
+        { username: 'operation_department', email: 'operation@ccl.com', password: 'deptoperation123', full_name: 'Operation Department User', department: 'Operation Department', access_level: 'basic' },
+        { username: 'survey_department', email: 'survey@ccl.com', password: 'deptsurvey123', full_name: 'Survey Department User', department: 'Survey Department', access_level: 'basic' },
+        { username: 'safety_department', email: 'safety@ccl.com', password: 'deptsafety123', full_name: 'Safety Department User', department: 'Safety Department', access_level: 'basic' }
+      ];
+      
+      let created = 0;
+      
+      // Create admin users
+      for (const admin of adminUsers) {
+        try {
+          const hashedPassword = await bcrypt.hash(admin.password, 10);
+          await this.run(
+            'INSERT INTO admin (username, email, password_hash, full_name, permissions) VALUES (?, ?, ?, ?, ?)',
+            [admin.username, admin.email, hashedPassword, admin.full_name, admin.permissions]
+          );
+          created++;
+          console.log(`✅ Created admin: ${admin.email}`);
+        } catch (err) {
+          console.log(`⚠️ Skipped admin ${admin.email}:`, err.message);
+        }
+      }
+      
+      // Create department users
+      for (const user of departmentUsers) {
+        try {
+          const hashedPassword = await bcrypt.hash(user.password, 10);
+          await this.run(
+            'INSERT INTO "user" (username, email, password_hash, full_name, department, access_level) VALUES (?, ?, ?, ?, ?, ?)',
+            [user.username, user.email, hashedPassword, user.full_name, user.department, user.access_level]
+          );
+          created++;
+          console.log(`✅ Created user: ${user.email}`);
+        } catch (err) {
+          console.log(`⚠️ Skipped user ${user.email}:`, err.message);
+        }
+      }
+      
+      console.log(`🎉 Auto-setup completed! Created ${created} users`);
+    } catch (error) {
+      console.error('❌ Auto-setup failed:', error.message);
+      // Don't throw - this is not critical for app startup
     }
   }
 
