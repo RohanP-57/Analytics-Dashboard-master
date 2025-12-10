@@ -167,17 +167,19 @@ router.get('/list', authenticateToken, async (req, res) => {
         upload_date: doc.upload_date,
         file_size: doc.file_size,
         cloudinary_url: doc.cloudinary_url,
-        comment: doc.comment,
-        ai_report_url: doc.ai_report_url,
-        ai_report_public_id: doc.ai_report_public_id,
-        hyperlink: doc.hyperlink,
+        comment: doc.comment || null,
+        ai_report_url: doc.ai_report_url || null,
+        ai_report_public_id: doc.ai_report_public_id || null,
+        hyperlink: doc.hyperlink || null,
         canDelete: doc.uploaded_by === req.user.id || req.user.role === 'admin',
         canEdit: doc.uploaded_by === req.user.id || req.user.role === 'admin'
       }))
     });
 
   } catch (error) {
-    console.error('List documents error:', error);
+    console.error('❌ List documents error:', error);
+    console.error('❌ Error details:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Failed to fetch documents: ' + error.message });
   }
 });

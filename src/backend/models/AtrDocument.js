@@ -39,18 +39,42 @@ class AtrDocumentModel {
 
   async getDocumentsByDepartment(department) {
     try {
-      const documents = await database.all(
-        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
-                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
-                ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
-                u.username as uploaded_by_name 
-         FROM atr_documents ad 
-         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
-         WHERE ad.department = ? 
-         ORDER BY ad.upload_date DESC`,
-        [department]
-      );
-      return documents;
+      // Try with new columns first
+      try {
+        const documents = await database.all(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           WHERE ad.department = ? 
+           ORDER BY ad.upload_date DESC`,
+          [department]
+        );
+        return documents;
+      } catch (columnError) {
+        // If new columns don't exist, fall back to old query
+        console.log('⚠️ New columns not found, using fallback query');
+        const documents = await database.all(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           WHERE ad.department = ? 
+           ORDER BY ad.upload_date DESC`,
+          [department]
+        );
+        // Add null values for missing columns
+        return documents.map(doc => ({
+          ...doc,
+          comment: null,
+          ai_report_url: null,
+          ai_report_public_id: null,
+          hyperlink: null
+        }));
+      }
     } catch (err) {
       throw new Error(`Database error: ${err.message}`);
     }
@@ -58,16 +82,38 @@ class AtrDocumentModel {
 
   async getAllDocuments() {
     try {
-      const documents = await database.all(
-        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
-                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
-                ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
-                u.username as uploaded_by_name 
-         FROM atr_documents ad 
-         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
-         ORDER BY ad.upload_date DESC`
-      );
-      return documents;
+      // Try with new columns first
+      try {
+        const documents = await database.all(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           ORDER BY ad.upload_date DESC`
+        );
+        return documents;
+      } catch (columnError) {
+        // If new columns don't exist, fall back to old query
+        console.log('⚠️ New columns not found, using fallback query');
+        const documents = await database.all(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           ORDER BY ad.upload_date DESC`
+        );
+        // Add null values for missing columns
+        return documents.map(doc => ({
+          ...doc,
+          comment: null,
+          ai_report_url: null,
+          ai_report_public_id: null,
+          hyperlink: null
+        }));
+      }
     } catch (err) {
       throw new Error(`Database error: ${err.message}`);
     }
@@ -75,17 +121,43 @@ class AtrDocumentModel {
 
   async getDocumentById(id) {
     try {
-      const document = await database.get(
-        `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
-                ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
-                ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
-                u.username as uploaded_by_name 
-         FROM atr_documents ad 
-         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
-         WHERE ad.id = ?`,
-        [id]
-      );
-      return document;
+      // Try with new columns first
+      try {
+        const document = await database.get(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  ad.comment, ad.ai_report_url, ad.ai_report_public_id, ad.hyperlink,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           WHERE ad.id = ?`,
+          [id]
+        );
+        return document;
+      } catch (columnError) {
+        // If new columns don't exist, fall back to old query
+        console.log('⚠️ New columns not found, using fallback query');
+        const document = await database.get(
+          `SELECT ad.id, ad.filename, ad.cloudinary_url, ad.cloudinary_public_id, 
+                  ad.department, ad.uploaded_by, ad.file_size, ad.upload_date,
+                  u.username as uploaded_by_name 
+           FROM atr_documents ad 
+           LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+           WHERE ad.id = ?`,
+          [id]
+        );
+        // Add null values for missing columns
+        if (document) {
+          return {
+            ...document,
+            comment: null,
+            ai_report_url: null,
+            ai_report_public_id: null,
+            hyperlink: null
+          };
+        }
+        return document;
+      }
     } catch (err) {
       throw new Error(`Database error: ${err.message}`);
     }
