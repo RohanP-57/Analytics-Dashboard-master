@@ -34,11 +34,13 @@ router.get('/list', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Fetching ATR documents...');
     
-    const { site, startDate, endDate, search } = req.query;
+    const { site, department, startDate, endDate, search } = req.query;
     let documents;
 
     if (search) {
       documents = await UploadedATR.searchATRDocuments(search);
+    } else if (department) {
+      documents = await UploadedATR.getATRDocumentsByDepartment(department);
     } else if (site) {
       documents = await UploadedATR.getATRDocumentsBySite(site);
     } else if (startDate && endDate) {

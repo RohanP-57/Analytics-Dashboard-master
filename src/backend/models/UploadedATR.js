@@ -37,6 +37,25 @@ class UploadedATRModel {
     }
   }
 
+  async getATRDocumentsByDepartment(department) {
+    try {
+      const documents = await database.all(
+        `SELECT ad.id, ad.filename, ad.site_name, ad.cloudinary_url, ad.cloudinary_public_id,
+                ad.department, ad.uploaded_by, ad.upload_date, ad.file_size, ad.comment,
+                ad.inferred_report_id,
+                u.username as uploaded_by_name 
+         FROM atr_documents ad 
+         LEFT JOIN "user" u ON ad.uploaded_by = u.id 
+         WHERE ad.department = ? 
+         ORDER BY ad.upload_date DESC`,
+        [department]
+      );
+      return documents;
+    } catch (err) {
+      throw new Error(`Database error: ${err.message}`);
+    }
+  }
+
   async getATRDocumentsByDateRange(startDate, endDate) {
     try {
       const documents = await database.all(

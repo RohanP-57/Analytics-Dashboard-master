@@ -12,7 +12,6 @@ const InferredReports = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -20,16 +19,6 @@ const InferredReports = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
-
-  const departments = [
-    'E&T Department',
-    'Security Department',
-    'Operation Department',
-    'Survey Department',
-    'Safety Department',
-    'Admin',
-    'Super Admin'
-  ];
 
   const sites = [
     'Site A',
@@ -47,7 +36,7 @@ const InferredReports = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [selectedDepartment, selectedSite, searchTerm]);
+  }, [selectedSite, searchTerm]);
 
   const fetchDocuments = async () => {
     try {
@@ -55,9 +44,6 @@ const InferredReports = () => {
       const params = {};
       
       // Add filters to params
-      if (isAdmin && selectedDepartment !== 'all') {
-        params.department = selectedDepartment;
-      }
       if (selectedSite !== 'all') {
         params.site = selectedSite;
       }
@@ -82,7 +68,6 @@ const InferredReports = () => {
   };
 
   const handleClearFilters = () => {
-    setSelectedDepartment('all');
     setSelectedSite('all');
     setSearchTerm('');
   };
@@ -317,22 +302,6 @@ const InferredReports = () => {
               </select>
             </div>
             
-            {isAdmin && (
-              <div className="filter-group">
-                <label>Department Filter:</label>
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="department-filter"
-                >
-                  <option value="all">All Departments</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
             <button onClick={handleClearFilters} className="clear-filters-button">
               <Filter size={16} />
               Clear Filters
@@ -395,7 +364,7 @@ const InferredReports = () => {
                 <tr>
                   <th>Filename</th>
                   <th>Site Name</th>
-                  <th>Details</th>
+                  <th>Upload ATR</th>
                   <th>Actions</th>
                 </tr>
               </thead>

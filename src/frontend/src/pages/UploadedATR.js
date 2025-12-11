@@ -12,6 +12,7 @@ const UploadedATR = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [siteFilter, setSiteFilter] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('');
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentValue, setEditCommentValue] = useState('');
 
@@ -28,13 +29,24 @@ const UploadedATR = () => {
     'Kathara'
   ];
 
+  // Available departments
+  const departments = [
+    'Mining',
+    'Survey',
+    'Geology',
+    'Environment',
+    'Safety',
+    'Mechanical',
+    'Electrical'
+  ];
+
   useEffect(() => {
     fetchATRDocuments();
   }, []);
 
   useEffect(() => {
     fetchATRDocuments();
-  }, [searchTerm, dateFilter, siteFilter]);
+  }, [searchTerm, dateFilter, siteFilter, departmentFilter]);
 
   const fetchATRDocuments = async () => {
     try {
@@ -45,6 +57,7 @@ const UploadedATR = () => {
       if (searchTerm) params.search = searchTerm;
       if (dateFilter) params.startDate = dateFilter;
       if (siteFilter) params.site = siteFilter;
+      if (departmentFilter) params.department = departmentFilter;
       
       const response = await api.get('/uploaded-atr/list', { params });
       const documentsData = response.data?.documents || [];
@@ -88,6 +101,7 @@ const UploadedATR = () => {
     setSearchTerm('');
     setDateFilter('');
     setSiteFilter('');
+    setDepartmentFilter('');
   };
 
   const handleEditComment = (doc) => {
@@ -166,6 +180,20 @@ const UploadedATR = () => {
                 <option value="">All Sites</option>
                 {sites.map(site => (
                   <option key={site} value={site}>{site}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Department Filter:</label>
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                className="department-filter"
+              >
+                <option value="">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
             </div>
