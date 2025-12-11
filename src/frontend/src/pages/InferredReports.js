@@ -168,78 +168,7 @@ const InferredReports = () => {
     setSelectedDocument(null);
   };
 
-  const handleUpdateComment = async (documentId, comment) => {
-    try {
-      await api.patch(`/inferred-reports/${documentId}/comment`, { comment });
-      toast.success('Comment updated');
-      fetchDocuments();
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Update comment error:', error);
-      toast.error('Failed to update comment');
-    }
-  };
 
-  const handleUpdateHyperlink = async (documentId, hyperlink) => {
-    if (hyperlink && !isValidUrl(hyperlink)) {
-      toast.error('Please enter a valid URL');
-      return;
-    }
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink });
-      toast.success('Hyperlink updated');
-      fetchDocuments();
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Update hyperlink error:', error);
-      toast.error('Failed to update hyperlink');
-    }
-  };
-
-  const handleDeleteComment = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/comment`, { comment: '' });
-      toast.success('Comment deleted');
-      fetchDocuments();
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Delete comment error:', error);
-      toast.error('Failed to delete comment');
-    }
-  };
-
-  const handleDeleteHyperlink = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this hyperlink?')) return;
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink: '' });
-      toast.success('Hyperlink deleted');
-      fetchDocuments();
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Delete hyperlink error:', error);
-      toast.error('Failed to delete hyperlink');
-    }
-  };
 
   const handleUploadAtr = async (documentId, file, site, department, comment) => {
     try {
@@ -459,10 +388,6 @@ const InferredReports = () => {
         show={showDetailsModal}
         document={selectedDocument}
         onClose={closeDetailsModal}
-        onUpdateComment={handleUpdateComment}
-        onUpdateHyperlink={handleUpdateHyperlink}
-        onDeleteComment={handleDeleteComment}
-        onDeleteHyperlink={handleDeleteHyperlink}
         onUploadAtr={handleUploadAtr}
       />
     </div>
