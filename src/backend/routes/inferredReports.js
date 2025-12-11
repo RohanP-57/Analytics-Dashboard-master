@@ -157,11 +157,13 @@ router.get('/list', authenticateToken, async (req, res) => {
     // Admin can see all documents, users only see their department's documents
     if (req.user.role === 'admin' || req.user.userType === 'admin') {
       documents = await InferredReports.getAllDocuments();
+      console.log('📊 Backend - First document from DB:', documents[0]);
     } else {
       if (!req.user.department) {
         return res.status(400).json({ error: 'User department not found' });
       }
       documents = await InferredReports.getDocumentsByDepartment(req.user.department);
+      console.log('📊 Backend - First document from DB:', documents[0]);
     }
 
     // Apply filters
