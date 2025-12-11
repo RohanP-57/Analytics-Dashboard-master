@@ -22,6 +22,7 @@ RUN apk add --no-cache \
     sqlite \
     curl \
     python3 \
+    py3-setuptools \
     make \
     g++
 
