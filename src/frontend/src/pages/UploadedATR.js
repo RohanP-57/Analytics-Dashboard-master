@@ -92,18 +92,8 @@ const UploadedATR = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -196,58 +186,34 @@ const UploadedATR = () => {
             <table className="documents-table">
               <thead>
                 <tr>
-                  <th>S. No.</th>
+                  <th>Filename</th>
                   <th>Site Name</th>
-                  <th>Date/Time</th>
-                  <th>Video Link</th>
-                  <th>Upload ATR</th>
+                  <th>Upload Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {atrDocuments.map((doc) => (
                   <tr key={doc.id}>
-                    <td>{doc.serialNo}</td>
-                    <td>{doc.siteName}</td>
-                    <td>{formatDate(doc.dateTime)}</td>
-                    <td>
-                      {doc.videoLink ? (
-                        <a 
-                          href={doc.videoLink} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="video-link"
-                        >
-                          🎥 View Video
-                        </a>
-                      ) : (
-                        <span className="no-link">No Video</span>
-                      )}
+                    <td className="filename-cell">
+                      <div className="file-info">
+                        <span className="file-icon">📄</span>
+                        <span className="filename">{doc.filename || 'Unknown'}</span>
+                      </div>
                     </td>
-                    <td>
-                      {doc.atrLink ? (
-                        <button
-                          onClick={() => handleViewATR(doc.atrLink)}
-                          className="atr-link-button"
-                        >
-                          📄 View ATR
-                        </button>
-                      ) : (
-                        <span className="no-link">No ATR</span>
-                      )}
-                    </td>
+                    <td>{doc.siteName || 'N/A'}</td>
+                    <td>{formatDate(doc.uploadDate)}</td>
                     <td className="actions-cell">
                       <button
-                        onClick={() => handleViewATR(doc.atrLink)}
+                        onClick={() => handleViewATR(doc.cloudinaryUrl)}
                         className="icon-button view"
                         title="View ATR Document"
-                        disabled={!doc.atrLink}
                       >
                         <Eye size={18} />
                       </button>
                       {isAdmin && (
                         <button
-                          onClick={() => handleDeleteATR(doc.id, doc.fileName || `ATR ${doc.serialNo}`)}
+                          onClick={() => handleDeleteATR(doc.id, doc.filename)}
                           className="icon-button delete"
                           title="Delete ATR Document"
                         >

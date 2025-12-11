@@ -4,6 +4,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
 import UploadModal from '../components/UploadModal';
+import DetailsModal from '../components/DetailsModal';
 import '../styles/UploadATR.css';
 
 const InferredReports = () => {
@@ -15,6 +16,8 @@ const InferredReports = () => {
   const [selectedSite, setSelectedSite] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -166,7 +169,88 @@ const InferredReports = () => {
     }
   };
 
+  const openDetailsModal = (doc) => {
+    setSelectedDocument(doc);
+    setShowDetailsModal(true);
+  };
 
+  const closeDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedDocument(null);
+  };
+
+  const handleUpdateComment = async (documentId, comment) => {
+    try {
+      await api.patch(`/inferred-reports/${documentId}/comment`, { comment });
+      toast.success('Comment updated');
+      fetchDocuments();
+      const response = await api.get('/inferred-reports/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Update comment error:', error);
+      toast.error('Failed to update comment');
+    }
+  };
+
+  const handleUpdateHyperlink = async (documentId, hyperlink) => {
+    if (hyperlink && !isValidUrl(hyperlink)) {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    try {
+      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink });
+      toast.success('Hyperlink updated');
+      fetchDocuments();
+      const response = await api.get('/inferred-reports/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Update hyperlink error:', error);
+      toast.error('Failed to update hyperlink');
+    }
+  };
+
+  const handleDeleteComment = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      await api.patch(`/inferred-reports/${documentId}/comment`, { comment: '' });
+      toast.success('Comment deleted');
+      fetchDocuments();
+      const response = await api.get('/inferred-reports/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      toast.error('Failed to delete comment');
+    }
+  };
+
+  const handleDeleteHyperlink = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this hyperlink?')) return;
+
+    try {
+      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink: '' });
+      toast.success('Hyperlink deleted');
+      fetchDocuments();
+      const response = await api.get('/inferred-reports/list');
+      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
+      if (updatedDoc) {
+        setSelectedDocument(updatedDoc);
+      }
+    } catch (error) {
+      console.error('Delete hyperlink error:', error);
+      toast.error('Failed to delete hyperlink');
+    }
+  };
 
   return (
     <div className="upload-atr-container">
@@ -286,6 +370,7 @@ const InferredReports = () => {
                 <tr>
                   <th>Filename</th>
                   <th>Site Name</th>
+                  <th>Details</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -299,6 +384,21 @@ const InferredReports = () => {
                       </div>
                     </td>
                     <td>{doc.site_name || 'N/A'}</td>
+                    <td className="details-cell">
+                      <div className="details-badges">
+                        {doc.comment && <span className="badge comment-badge" title="Has comment">💬</span>}
+                        {doc.hyperlink && <span className="badge hyperlink-badge" title="Has hyperlink">🔗</span>}
+                        {!doc.comment && !doc.hyperlink && <span className="no-details">-</span>}
+                      </div>
+                      <button
+                        onClick={() => openDetailsModal(doc)}
+                        className="details-button"
+                        title="View/Edit Details"
+                      >
+                        <Eye size={16} />
+                        <span>Details</span>
+                      </button>
+                    </td>
                     <td className="actions-cell">
                       <button
                         onClick={() => handleView(doc.id)}
@@ -325,6 +425,19 @@ const InferredReports = () => {
         )}
       </div>
 
+      {/* Details Modal */}
+      <DetailsModal
+        show={showDetailsModal}
+        document={selectedDocument}
+        onClose={closeDetailsModal}
+        onUpdateComment={handleUpdateComment}
+        onUpdateHyperlink={handleUpdateHyperlink}
+        onDeleteComment={handleDeleteComment}
+        onDeleteHyperlink={handleDeleteHyperlink}
+        onUploadAiReport={() => {}}
+        onDeleteAiReport={() => {}}
+        onViewAiReport={() => {}}
+      />
     </div>
   );
 };

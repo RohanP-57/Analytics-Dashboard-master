@@ -50,17 +50,13 @@ router.get('/list', authenticateToken, async (req, res) => {
     res.json({
       documents: documents.map(doc => ({
         id: doc.id,
-        serialNo: doc.serial_no,
+        filename: doc.filename,
         siteName: doc.site_name,
-        dateTime: doc.date_time,
-        videoLink: doc.video_link,
-        atrLink: doc.atr_link,
-        fileName: doc.file_name,
+        cloudinaryUrl: doc.cloudinary_url,
         department: doc.department,
         uploadedBy: doc.uploaded_by_name || 'Unknown',
         uploadDate: doc.upload_date,
         fileSize: doc.file_size,
-        comment: doc.comment,
         canDelete: req.user.role === 'admin' || req.user.userType === 'admin',
         canEdit: req.user.role === 'admin' || req.user.userType === 'admin' || doc.uploaded_by === req.user.id
       }))
@@ -72,117 +68,10 @@ router.get('/list', authenticateToken, async (req, res) => {
   }
 });
 
-// Upload new ATR document
-router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res) => {
-  try {
-    console.log('🔍 ATR Document Upload Request Started');
-    console.log('📤 User:', req.user?.username, 'Department:', req.user?.department);
+// Note: Upload functionality removed - ATR documents are managed through atr_documents table
 
-    const { siteName, dateTime, videoLink, comment } = req.body;
-
-    if (!siteName || !dateTime) {
-      return res.status(400).json({ error: 'Site name and date/time are required' });
-    }
-
-    let atrLink = null;
-    let fileName = null;
-    let fileSize = null;
-
-    // If PDF file is uploaded
-    if (req.file) {
-      console.log('📁 File received:', `${req.file.originalname} (${req.file.size} bytes)`);
-
-      // Determine department based on user role
-      let department = req.user.department;
-      if (!department) {
-        if (req.user.role === 'admin' || req.user.userType === 'admin') {
-          department = 'Admin';
-        } else if (req.user.username === 'AEROVANIA MASTER' || req.user.role === 'super_admin') {
-          department = 'Super Admin';
-        } else {
-          return res.status(400).json({ error: 'User department not found' });
-        }
-      }
-
-      const timestamp = Date.now();
-      const filename = `atr_${timestamp}_${req.file.originalname}`;
-
-      console.log('☁️ Starting Cloudinary upload...');
-      const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          {
-            resource_type: 'raw',
-            folder: `uploaded-atr/${siteName.replace(/\s+/g, '-').toLowerCase()}`,
-            public_id: filename.replace('.pdf', ''),
-            format: 'pdf',
-            type: 'upload',
-            access_mode: 'public'
-          },
-          (error, result) => {
-            if (error) {
-              console.log('❌ Cloudinary upload failed:', error.message);
-              reject(error);
-            } else {
-              console.log('✅ Cloudinary upload successful:', result.secure_url);
-              resolve(result);
-            }
-          }
-        ).end(req.file.buffer);
-      });
-
-      atrLink = uploadResult.secure_url;
-      fileName = req.file.originalname;
-      fileSize = req.file.size;
-    }
-
-    // Get next serial number
-    const serialNo = await UploadedATR.getNextSerialNumber();
-
-    // Save to database
-    console.log('💾 Saving to database...');
-    const atrData = {
-      serial_no: serialNo,
-      site_name: siteName,
-      date_time: dateTime,
-      video_link: videoLink || null,
-      atr_link: atrLink,
-      file_name: fileName,
-      department: req.user.department || 'Admin',
-      uploaded_by: req.user.id,
-      file_size: fileSize,
-      comment: comment || null
-    };
-
-    const document = await UploadedATR.createATRDocument(atrData);
-    console.log('✅ Database save successful, document ID:', document.id);
-
-    res.status(201).json({
-      message: 'ATR document uploaded successfully',
-      document: {
-        id: document.id,
-        serialNo: document.serial_no,
-        siteName: document.site_name,
-        dateTime: document.date_time,
-        videoLink: document.video_link,
-        atrLink: document.atr_link,
-        fileName: document.file_name,
-        department: document.department,
-        uploadDate: document.upload_date,
-        fileSize: document.file_size,
-        comment: document.comment
-      }
-    });
-
-    console.log('🎉 ATR Document Upload completed successfully');
-
-  } catch (error) {
-    console.error('❌ ATR Document Upload error:', error);
-    res.status(500).json({ error: 'Failed to upload ATR document: ' + error.message });
-  }
-});
-
-// Get ATR document by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+// View ATR document
+router.get('/view/:id', authenticateToken, async (req, res) => {
   try {
     const document = await UploadedATR.getATRDocumentById(req.params.id);
 
@@ -191,66 +80,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 
     res.json({
-      id: document.id,
-      serialNo: document.serial_no,
-      siteName: document.site_name,
-      dateTime: document.date_time,
-      videoLink: document.video_link,
-      atrLink: document.atr_link,
-      fileName: document.file_name,
+      filename: document.filename,
+      url: document.cloudinary_url,
       department: document.department,
-      uploadedBy: document.uploaded_by_name || 'Unknown',
-      uploadDate: document.upload_date,
-      fileSize: document.file_size,
-      comment: document.comment
+      upload_date: document.upload_date
     });
 
   } catch (error) {
-    console.error('❌ Get ATR document error:', error);
-    res.status(500).json({ error: 'Failed to fetch ATR document: ' + error.message });
-  }
-});
-
-// Update ATR document
-router.put('/:id', authenticateToken, async (req, res) => {
-  try {
-    const document = await UploadedATR.getATRDocumentById(req.params.id);
-
-    if (!document) {
-      return res.status(404).json({ error: 'ATR document not found' });
-    }
-
-    // Check if user can edit
-    const canEdit = req.user.role === 'admin' ||
-      req.user.userType === 'admin' ||
-      document.uploaded_by === req.user.id;
-
-    if (!canEdit) {
-      return res.status(403).json({ error: 'Permission denied' });
-    }
-
-    const { siteName, dateTime, videoLink, atrLink, fileName, comment } = req.body;
-
-    const updateData = {
-      site_name: siteName || document.site_name,
-      date_time: dateTime || document.date_time,
-      video_link: videoLink !== undefined ? videoLink : document.video_link,
-      atr_link: atrLink !== undefined ? atrLink : document.atr_link,
-      file_name: fileName || document.file_name,
-      comment: comment !== undefined ? comment : document.comment
-    };
-
-    const updated = await UploadedATR.updateATRDocument(req.params.id, updateData);
-
-    if (!updated) {
-      return res.status(404).json({ error: 'ATR document not found' });
-    }
-
-    res.json({ message: 'ATR document updated successfully' });
-
-  } catch (error) {
-    console.error('❌ Update ATR document error:', error);
-    res.status(500).json({ error: 'Failed to update ATR document: ' + error.message });
+    console.error('❌ View ATR document error:', error);
+    res.status(500).json({ error: 'Failed to access document: ' + error.message });
   }
 });
 
@@ -272,16 +110,10 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Permission denied' });
     }
 
-    // Delete from Cloudinary if ATR file exists
-    if (document.atr_link && document.atr_link.includes('cloudinary.com')) {
+    // Delete from Cloudinary
+    if (document.cloudinary_public_id) {
       try {
-        // Extract public_id from Cloudinary URL
-        const urlParts = document.atr_link.split('/');
-        const publicIdWithExtension = urlParts[urlParts.length - 1];
-        const publicId = publicIdWithExtension.split('.')[0];
-        const folderPath = `uploaded-atr/${document.site_name.replace(/\s+/g, '-').toLowerCase()}/${publicId}`;
-        
-        await cloudinary.uploader.destroy(folderPath, {
+        await cloudinary.uploader.destroy(document.cloudinary_public_id, {
           resource_type: 'raw'
         });
         console.log('✅ ATR file deleted from Cloudinary');
@@ -302,21 +134,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Delete ATR document error:', error);
     res.status(500).json({ error: 'Failed to delete ATR document: ' + error.message });
-  }
-});
-
-// Get available sites
-router.get('/sites/list', authenticateToken, async (req, res) => {
-  try {
-    // Get unique site names from uploaded ATR documents
-    const sites = await UploadedATR.getAllATRDocuments();
-    const uniqueSites = [...new Set(sites.map(doc => doc.site_name))].sort();
-
-    res.json({ sites: uniqueSites });
-
-  } catch (error) {
-    console.error('❌ Get sites error:', error);
-    res.status(500).json({ error: 'Failed to fetch sites: ' + error.message });
   }
 });
 

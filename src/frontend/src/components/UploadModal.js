@@ -140,13 +140,14 @@ const UploadModal = ({
 
           {/* Site Name Field */}
           <div className="form-group">
-            <label htmlFor="upload-site-name">Site Name (Optional)</label>
+            <label htmlFor="upload-site-name">Site Name *</label>
             <select
               id="upload-site-name"
               value={uploadSiteName}
               onChange={(e) => setUploadSiteName(e.target.value)}
+              required
             >
-              <option value="">Select a site...</option>
+              <option value="">Select a site (required)...</option>
               {sites.map(site => (
                 <option key={site} value={site}>{site}</option>
               ))}
@@ -192,7 +193,7 @@ const UploadModal = ({
           <button 
             className="upload-button"
             onClick={handleSubmit}
-            disabled={uploading || !uploadFile}
+            disabled={uploading || !uploadFile || !uploadSiteName}
           >
             {uploading ? (
               <>
