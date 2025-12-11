@@ -171,9 +171,11 @@ router.get('/list', authenticateToken, async (req, res) => {
 
     if (startDate) {
       const filterDate = new Date(startDate);
+      filterDate.setHours(0, 0, 0, 0); // Set to start of day
       documents = documents.filter(doc => {
         const docDate = new Date(doc.upload_date);
-        return docDate >= filterDate;
+        docDate.setHours(0, 0, 0, 0); // Set to start of day
+        return docDate.getTime() === filterDate.getTime();
       });
     }
     

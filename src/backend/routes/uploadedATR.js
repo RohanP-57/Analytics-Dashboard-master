@@ -34,19 +34,38 @@ router.get('/list', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Fetching ATR documents...');
     
-    const { site, department, startDate, endDate, search } = req.query;
+    const { site, department, startDate, search } = req.query;
     let documents;
 
-    if (search) {
-      documents = await UploadedATR.searchATRDocuments(search);
-    } else if (department) {
-      documents = await UploadedATR.getATRDocumentsByDepartment(department);
-    } else if (site) {
-      documents = await UploadedATR.getATRDocumentsBySite(site);
-    } else if (startDate && endDate) {
-      documents = await UploadedATR.getATRDocumentsByDateRange(startDate, endDate);
-    } else {
-      documents = await UploadedATR.getAllATRDocuments();
+    // Get all documents first
+    documents = await UploadedATR.getAllATRDocuments();
+
+    // Apply filters
+    if (search && search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      documents = documents.filter(doc => 
+        (doc.filename && doc.filename.toLowerCase().includes(searchTerm)) ||
+        (doc.site_name && doc.site_name.toLowerCase().includes(searchTerm)) ||
+        (doc.comment && doc.comment.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    if (department) {
+      documents = documents.filter(doc => doc.department === department);
+    }
+
+    if (site) {
+      documents = documents.filter(doc => doc.site_name === site);
+    }
+
+    if (startDate) {
+      const filterDate = new Date(startDate);
+      filterDate.setHours(0, 0, 0, 0); // Set to start of day
+      documents = documents.filter(doc => {
+        const docDate = new Date(doc.upload_date);
+        docDate.setHours(0, 0, 0, 0); // Set to start of day
+        return docDate.getTime() === filterDate.getTime();
+      });
     }
 
     res.json({
