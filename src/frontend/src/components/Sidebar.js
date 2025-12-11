@@ -31,7 +31,10 @@ const Sidebar = () => {
         <div className="sidebar-logo">
           <BarChart3 className="logo-icon" />
           <div className="logo-text">
-            <div className="logo-description">AI-Powered Project Management</div>
+            <div className="logo-title">AI Driven</div>
+            <div className="logo-title">Aerial Monitoring &</div>
+            <div className="logo-title">Analytics System</div>
+            <div className="logo-title">For Mine Operations</div>
           </div>
         </div>
       </div>
@@ -74,7 +77,7 @@ const Sidebar = () => {
 
       {/* Copyright */}
       <div className="sidebar-copyright">
-        © 2025 Aerovania Private Limited
+        © 2024 Aerovania Private Limited
         <br />
         v2.1(3) All Dashboard
       </div>
