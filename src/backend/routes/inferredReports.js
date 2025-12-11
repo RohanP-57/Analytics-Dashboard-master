@@ -595,20 +595,8 @@ router.delete('/:id/atr/:atrId', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'ATR does not belong to this inferred report' });
     }
     
-    // Get inferred report to check permissions
-    const inferredReport = await InferredReports.getDocumentById(req.params.id);
-    if (!inferredReport) {
-      return res.status(404).json({ error: 'Inferred report not found' });
-    }
-    
-    // Check if user can delete
-    const canDelete = req.user.role === 'admin' ||
-      req.user.userType === 'admin' ||
-      inferredReport.uploaded_by === req.user.id;
-    
-    if (!canDelete) {
-      return res.status(403).json({ error: 'Permission denied' });
-    }
+    // All authenticated users can delete ATRs
+    // No additional permission check needed - just being authenticated is enough
     
     // Delete from Cloudinary
     if (atr.cloudinary_public_id) {

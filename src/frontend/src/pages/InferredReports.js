@@ -491,15 +491,13 @@ const InferredReports = () => {
                             >
                               <Eye size={16} />
                             </button>
-                            {doc.canDelete && (
-                              <button
-                                onClick={() => handleDeleteAtr(doc.id, doc.atrId, doc.atrFilename)}
-                                className="icon-button delete"
-                                title="Delete ATR"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDeleteAtr(doc.id, doc.atrId, doc.atrFilename)}
+                              className="icon-button delete"
+                              title="Delete ATR"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         </div>
                       ) : (
