@@ -7,7 +7,7 @@ import UploadModal from '../components/UploadModal';
 import DetailsModal from '../components/DetailsModal';
 import '../styles/UploadATR.css';
 
-const UploadATR = () => {
+const InferredReports = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ const UploadATR = () => {
         ? { department: selectedDepartment }
         : {};
 
-      const response = await api.get('/atr/list', { params });
+      const response = await api.get('/inferred-reports/list', { params });
       const documentsData = response.data?.documents || [];
       setDocuments(Array.isArray(documentsData) ? documentsData : []);
     } catch (error) {
@@ -100,13 +100,13 @@ const UploadATR = () => {
       if (comment) formData.append('comment', comment);
       if (hyperlink) formData.append('hyperlink', hyperlink);
 
-      await api.post('/atr/upload', formData, {
+      await api.post('/inferred-reports/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      toast.success('AI Report uploaded successfully!');
+      toast.success('Inferred Report uploaded successfully!');
       setShowUploadModal(false);
       fetchDocuments();
     } catch (error) {
@@ -120,7 +120,7 @@ const UploadATR = () => {
 
   const handleView = async (documentId) => {
     try {
-      const response = await api.get(`/atr/view/${documentId}`);
+      const response = await api.get(`/inferred-reports/view/${documentId}`);
       window.open(response.data.url, '_blank');
     } catch (error) {
       console.error('View error:', error);
@@ -134,7 +134,7 @@ const UploadATR = () => {
     }
 
     try {
-      await api.delete(`/atr/${documentId}`);
+      await api.delete(`/inferred-reports/${documentId}`);
       toast.success('Document deleted successfully');
       fetchDocuments();
     } catch (error) {
@@ -155,11 +155,11 @@ const UploadATR = () => {
 
   const handleUpdateComment = async (documentId, comment) => {
     try {
-      await api.patch(`/atr/${documentId}/comment`, { comment });
+      await api.patch(`/inferred-reports/${documentId}/comment`, { comment });
       toast.success('Comment updated');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -177,11 +177,11 @@ const UploadATR = () => {
     }
 
     try {
-      await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink });
+      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink });
       toast.success('Hyperlink updated');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -196,11 +196,11 @@ const UploadATR = () => {
     if (!window.confirm('Are you sure you want to delete this comment?')) return;
 
     try {
-      await api.patch(`/atr/${documentId}/comment`, { comment: '' });
+      await api.patch(`/inferred-reports/${documentId}/comment`, { comment: '' });
       toast.success('Comment deleted');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -215,11 +215,11 @@ const UploadATR = () => {
     if (!window.confirm('Are you sure you want to delete this hyperlink?')) return;
 
     try {
-      await api.patch(`/atr/${documentId}/hyperlink`, { hyperlink: '' });
+      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink: '' });
       toast.success('Hyperlink deleted');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -247,7 +247,7 @@ const UploadATR = () => {
       const formData = new FormData();
       formData.append('pdf', file);
 
-      await api.post(`/atr/${documentId}/ai-report`, formData, {
+      await api.post(`/inferred-reports/${documentId}/ai-report`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -256,7 +256,7 @@ const UploadATR = () => {
       toast.success('AI Report PDF uploaded successfully!');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -277,11 +277,11 @@ const UploadATR = () => {
     if (!window.confirm('Are you sure you want to delete this AI Report?')) return;
 
     try {
-      await api.delete(`/atr/${documentId}/ai-report`);
+      await api.delete(`/inferred-reports/${documentId}/ai-report`);
       toast.success('AI Report deleted');
       fetchDocuments();
       // Update selected document
-      const response = await api.get('/atr/list');
+      const response = await api.get('/inferred-reports/list');
       const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
       if (updatedDoc) {
         setSelectedDocument(updatedDoc);
@@ -311,8 +311,8 @@ const UploadATR = () => {
   return (
     <div className="upload-atr-container">
       <div className="upload-atr-header">
-        <h1>AI Reports</h1>
-        <p>Upload and manage AI-generated reports for {user?.department || (isAdmin ? 'Admin' : 'your department')}</p>
+        <h1>Inferred Reports</h1>
+        <p>Upload and manage inferred reports for {user?.department || (isAdmin ? 'Admin' : 'your department')}</p>
       </div>
 
       {/* Upload Button */}
@@ -339,7 +339,7 @@ const UploadATR = () => {
       <div className="documents-section">
         <div className="documents-header">
           <div className="header-left">
-            <h2>AI Reports</h2>
+            <h2>Inferred Reports</h2>
             {isAdmin && (
               <span className="admin-badge">👑 Admin View</span>
             )}
@@ -371,8 +371,8 @@ const UploadATR = () => {
         ) : !Array.isArray(documents) || documents.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📁</div>
-            <h3>No AI reports found</h3>
-            <p>Upload your first AI report to get started</p>
+            <h3>No inferred reports found</h3>
+            <p>Upload your first inferred report to get started</p>
           </div>
         ) : (
           <div className="documents-table-wrapper">
@@ -464,4 +464,4 @@ const UploadATR = () => {
   );
 };
 
-export default UploadATR;
+export default InferredReports;

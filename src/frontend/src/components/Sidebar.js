@@ -16,8 +16,8 @@ const Sidebar = () => {
     { path: '/features', name: 'Features', icon: Layers },
     { path: '/sites', name: 'Sites', icon: MapPin },
     { path: '/upload', name: 'Upload', icon: Upload, adminOnly: true },
-    { path: '/upload-atr', name: 'AI Reports', icon: FileText },
-    { path: '/video-links', name: 'Video Links', icon: Video },
+    { path: '/inferred-reports', name: 'Inferred Reports', icon: FileText },
+    { path: '/uploaded-atr', name: 'Uploaded ATR', icon: FileText },
     { path: '/map', name: 'Map View', icon: Map },
     { path: '/table', name: 'Table View', icon: Table2 },
   ];

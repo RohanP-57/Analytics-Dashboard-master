@@ -12,6 +12,8 @@ const featuresRoutes = require('./routes/features');
 const videoLinksRoutes = require('./routes/videoLinks');
 const sitesRoutes = require('./routes/sites');
 const atrRoutes = require('./routes/atr');
+const inferredReportsRoutes = require('./routes/inferredReports');
+const uploadedATRRoutes = require('./routes/uploadedATR');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -47,6 +49,8 @@ app.use('/api/features', featuresRoutes);
 app.use('/api/video-links', videoLinksRoutes);
 app.use('/api/sites', sitesRoutes);
 app.use('/api/atr', atrRoutes);
+app.use('/api/inferred-reports', inferredReportsRoutes);
+app.use('/api/uploaded-atr', uploadedATRRoutes);
 
 // Image proxy route to handle Google Drive CORS issues
 app.get('/api/image-proxy', async (req, res) => {

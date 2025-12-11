@@ -15,9 +15,10 @@ import Upload from './pages/Upload';
 import MapView from './pages/MapView';
 import TableView from './pages/TableView';
 import ProfilePage from './pages/ProfilePage';
-import VideoLinks from './pages/VideoLinks';
+
 import Sites from './pages/Sites';
-import UploadATR from './pages/UploadATR';
+import InferredReports from './pages/InferredReports';
+import UploadedATR from './pages/UploadedATR';
 
 // Layout wrapper component
 const AppLayout = ({ children }) => {
@@ -85,19 +86,19 @@ function App() {
                 <TableView />
               </ProtectedRoute>
             } />
-            <Route path="/video-links" element={
-              <ProtectedRoute>
-                <VideoLinks />
-              </ProtectedRoute>
-            } />
             <Route path="/sites" element={
               <ProtectedRoute>
                 <Sites />
               </ProtectedRoute>
             } />
-            <Route path="/upload-atr" element={
+            <Route path="/inferred-reports" element={
               <ProtectedRoute>
-                <UploadATR />
+                <InferredReports />
+              </ProtectedRoute>
+            } />
+            <Route path="/uploaded-atr" element={
+              <ProtectedRoute>
+                <UploadedATR />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

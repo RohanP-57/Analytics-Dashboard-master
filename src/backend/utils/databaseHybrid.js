@@ -211,9 +211,9 @@ class HybridDatabase {
       else console.log('✅ User table ready (SQLite fallback)');
     });
 
-    // ATR documents table in SQLite (fallback)
+    // Inferred Reports table in SQLite (fallback)
     this.sqliteDb.run(`
-      CREATE TABLE IF NOT EXISTS atr_documents (
+      CREATE TABLE IF NOT EXISTS inferred_reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
         cloudinary_url TEXT NOT NULL,
@@ -228,8 +228,8 @@ class HybridDatabase {
         hyperlink TEXT
       )
     `, (err) => {
-      if (err) console.error('Error creating atr_documents table in SQLite:', err);
-      else console.log('✅ ATR documents table ready (SQLite fallback)');
+      if (err) console.error('Error creating inferred_reports table in SQLite:', err);
+      else console.log('✅ Inferred Reports table ready (SQLite fallback)');
     });
   }
 
@@ -272,10 +272,10 @@ class HybridDatabase {
       `);
       console.log('✅ User table created');
 
-      // ATR documents table (now AI Reports)
-      console.log('🔄 Creating atr_documents table...');
+      // Inferred Reports table (renamed from ATR documents)
+      console.log('🔄 Creating inferred_reports table...');
       await client.query(`
-        CREATE TABLE IF NOT EXISTS atr_documents (
+        CREATE TABLE IF NOT EXISTS inferred_reports (
           id SERIAL PRIMARY KEY,
           filename TEXT NOT NULL,
           cloudinary_url TEXT NOT NULL,
@@ -290,10 +290,10 @@ class HybridDatabase {
           hyperlink TEXT
         )
       `);
-      console.log('✅ ATR documents table created');
+      console.log('✅ Inferred Reports table created');
 
       await client.query('COMMIT');
-      console.log('✅ PostgreSQL tables created successfully (admin, user, atr_documents)');
+      console.log('✅ PostgreSQL tables created successfully (admin, user, inferred_reports)');
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('❌ Error creating PostgreSQL tables:', error);
@@ -409,7 +409,7 @@ class HybridDatabase {
 
   // Determine which database to use based on table
   getDatabase(table) {
-    const postgresTables = ['admin', 'user', 'atr_documents'];
+    const postgresTables = ['admin', 'user', 'inferred_reports', 'uploaded_atr'];
     
     if (this.usePostgres && postgresTables.includes(table)) {
       return 'postgres';
