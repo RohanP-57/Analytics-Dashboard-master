@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
+import UploadModal from '../components/UploadModal';
 import '../styles/UploadATR.css';
 
 const InferredReports = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -79,6 +82,63 @@ const InferredReports = () => {
     setSelectedDepartment('all');
     setSelectedSite('all');
     setSearchTerm('');
+  };
+
+  const isValidUrl = (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const handleUpload = async ({ file, siteName, comment, hyperlink }) => {
+    if (!file) {
+      toast.error('Please select a PDF file');
+      return;
+    }
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Please select a PDF file');
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error('File size must be less than 25MB');
+      return;
+    }
+
+    if (hyperlink && !isValidUrl(hyperlink)) {
+      toast.error('Please enter a valid URL for the hyperlink');
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+      formData.append('pdf', file);
+      if (siteName) formData.append('siteName', siteName);
+      if (comment) formData.append('comment', comment);
+      if (hyperlink) formData.append('hyperlink', hyperlink);
+
+      await api.post('/inferred-reports/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Inferred Report uploaded successfully!');
+      setShowUploadModal(false);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Upload error:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to upload document';
+      toast.error(errorMessage);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleView = async (documentId) => {
@@ -171,6 +231,26 @@ const InferredReports = () => {
           </div>
         </div>
       </div>
+
+      {/* Upload Button */}
+      <div className="upload-button-section">
+        <button 
+          className="upload-file-button"
+          onClick={() => setShowUploadModal(true)}
+          disabled={uploading}
+        >
+          <Upload size={20} />
+          Upload Inferred Report
+        </button>
+      </div>
+
+      {/* Upload Modal */}
+      <UploadModal
+        showModal={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleUpload}
+        uploading={uploading}
+      />
 
       {/* Documents List */}
       <div className="documents-section">

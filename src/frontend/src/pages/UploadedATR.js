@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
+import { Eye, Trash2, Search, Filter } from 'lucide-react';
 import '../styles/UploadATR.css';
 
 const UploadedATR = () => {
@@ -12,17 +12,6 @@ const UploadedATR = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [siteFilter, setSiteFilter] = useState('');
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  
-  // Upload form state
-  const [uploadForm, setUploadForm] = useState({
-    siteName: '',
-    dateTime: '',
-    videoLink: '',
-    comment: '',
-    file: null
-  });
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -67,47 +56,6 @@ const UploadedATR = () => {
     }
   };
 
-  const handleUploadATR = async () => {
-    if (!uploadForm.siteName || !uploadForm.dateTime) {
-      toast.error('Site name and date/time are required');
-      return;
-    }
-
-    try {
-      setUploading(true);
-      
-      const formData = new FormData();
-      formData.append('siteName', uploadForm.siteName);
-      formData.append('dateTime', uploadForm.dateTime);
-      if (uploadForm.videoLink) formData.append('videoLink', uploadForm.videoLink);
-      if (uploadForm.comment) formData.append('comment', uploadForm.comment);
-      if (uploadForm.file) formData.append('pdf', uploadForm.file);
-
-      await api.post('/uploaded-atr/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      toast.success('ATR document uploaded successfully!');
-      setShowUploadModal(false);
-      setUploadForm({
-        siteName: '',
-        dateTime: '',
-        videoLink: '',
-        comment: '',
-        file: null
-      });
-      fetchATRDocuments();
-    } catch (error) {
-      console.error('Upload error:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to upload ATR document';
-      toast.error(errorMessage);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleViewATR = (atrLink) => {
     if (atrLink) {
       window.open(atrLink, '_blank');
@@ -138,15 +86,6 @@ const UploadedATR = () => {
     setSearchTerm('');
     setDateFilter('');
     setSiteFilter('');
-  };
-
-  const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadForm(prev => ({
-        ...prev,
-        file: e.target.files[0]
-      }));
-    }
   };
 
   const formatDate = (dateString) => {
@@ -223,18 +162,6 @@ const UploadedATR = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Upload Button */}
-      <div className="upload-button-section">
-        <button 
-          className="upload-file-button"
-          onClick={() => setShowUploadModal(true)}
-          disabled={uploading}
-        >
-          <Upload size={20} />
-          Upload ATR
-        </button>
       </div>
 
       {/* ATR Documents Table */}
@@ -336,109 +263,6 @@ const UploadedATR = () => {
         )}
       </div>
 
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Upload ATR Document</h3>
-              <button onClick={() => setShowUploadModal(false)} className="close-button">×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="site-name">Site Name *</label>
-                <select
-                  id="site-name"
-                  value={uploadForm.siteName}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, siteName: e.target.value }))}
-                  required
-                >
-                  <option value="">Select a site...</option>
-                  {sites.map(site => (
-                    <option key={site} value={site}>{site}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="date-time">Date/Time *</label>
-                <input
-                  type="datetime-local"
-                  id="date-time"
-                  value={uploadForm.dateTime}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, dateTime: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="video-link">Video Link (Optional)</label>
-                <input
-                  type="url"
-                  id="video-link"
-                  value={uploadForm.videoLink}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, videoLink: e.target.value }))}
-                  placeholder="https://example.com/video.mp4"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="atr-file">ATR PDF File (Optional)</label>
-                <input
-                  type="file"
-                  id="atr-file"
-                  accept=".pdf"
-                  onChange={handleFileSelect}
-                />
-                {uploadForm.file && (
-                  <div className="file-selected">
-                    📄 {uploadForm.file.name} ({formatFileSize(uploadForm.file.size)})
-                  </div>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="comment">Comment (Optional)</label>
-                <textarea
-                  id="comment"
-                  value={uploadForm.comment}
-                  onChange={(e) => setUploadForm(prev => ({ ...prev, comment: e.target.value }))}
-                  placeholder="Add any comments about this ATR..."
-                  rows={3}
-                  maxLength={500}
-                />
-                <span className="char-count">{uploadForm.comment.length}/500</span>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                onClick={() => setShowUploadModal(false)} 
-                className="cancel-button"
-                disabled={uploading}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleUploadATR} 
-                className="upload-button"
-                disabled={uploading || !uploadForm.siteName || !uploadForm.dateTime}
-              >
-                {uploading ? (
-                  <>
-                    <div className="spinner-small"></div>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload size={18} />
-                    Upload ATR
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
