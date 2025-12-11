@@ -1577,7 +1577,7 @@
 
 /* Upload ATR Cell Styles */
 .upload-atr-cell {
-  text-align: center;
+  min-width: 200px;
 }
 
 .upload-atr-button {
@@ -1603,4 +1603,29 @@
 
 .upload-atr-button:active {
   transform: translateY(0);
+}
+
+/* ATR Uploaded Display */
+.atr-uploaded {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.atr-filename {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.atr-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }

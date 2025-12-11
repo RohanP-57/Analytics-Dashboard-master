@@ -194,23 +194,51 @@ router.get('/list', authenticateToken, async (req, res) => {
       );
     }
 
+    // Get ATR status for each document
+    const database = require('../utils/databaseHybrid');
+    const documentsWithAtr = await Promise.all(
+      documents.map(async (doc) => {
+        try {
+          const atr = await database.get(
+            'SELECT id, filename, cloudinary_url FROM atr_documents WHERE inferred_report_id = ?',
+            [doc.id]
+          );
+          
+          return {
+            id: doc.id,
+            filename: doc.filename,
+            site_name: doc.site_name || null,
+            department: doc.department,
+            uploaded_by: doc.uploaded_by_name || 'Unknown',
+            upload_date: doc.upload_date,
+            file_size: doc.file_size,
+            cloudinary_url: doc.cloudinary_url,
+            comment: doc.comment || null,
+            ai_report_url: doc.ai_report_url || null,
+            ai_report_public_id: doc.ai_report_public_id || null,
+            hyperlink: doc.hyperlink || null,
+            canDelete: doc.uploaded_by === req.user.id || req.user.role === 'admin',
+            canEdit: doc.uploaded_by === req.user.id || req.user.role === 'admin',
+            hasAtr: !!atr,
+            atrId: atr?.id || null,
+            atrFilename: atr?.filename || null,
+            atrUrl: atr?.cloudinary_url || null
+          };
+        } catch (error) {
+          console.error('Error fetching ATR for document:', doc.id, error);
+          return {
+            ...doc,
+            hasAtr: false,
+            atrId: null,
+            atrFilename: null,
+            atrUrl: null
+          };
+        }
+      })
+    );
+
     res.json({
-      documents: documents.map(doc => ({
-        id: doc.id,
-        filename: doc.filename,
-        site_name: doc.site_name || null,
-        department: doc.department,
-        uploaded_by: doc.uploaded_by_name || 'Unknown',
-        upload_date: doc.upload_date,
-        file_size: doc.file_size,
-        cloudinary_url: doc.cloudinary_url,
-        comment: doc.comment || null,
-        ai_report_url: doc.ai_report_url || null,
-        ai_report_public_id: doc.ai_report_public_id || null,
-        hyperlink: doc.hyperlink || null,
-        canDelete: doc.uploaded_by === req.user.id || req.user.role === 'admin',
-        canEdit: doc.uploaded_by === req.user.id || req.user.role === 'admin'
-      }))
+      documents: documentsWithAtr
     });
 
   } catch (error) {
@@ -544,6 +572,67 @@ router.post('/:id/upload-atr', authenticateToken, upload.single('pdf'), async (r
   } catch (error) {
     console.error('❌ ATR Upload error:', error);
     res.status(500).json({ error: 'Failed to upload ATR: ' + error.message });
+  }
+});
+
+// Delete ATR document
+router.delete('/:id/atr/:atrId', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔍 Delete ATR Request - ATR ID:', req.params.atrId);
+    
+    const database = require('../utils/databaseHybrid');
+    
+    // Get ATR document
+    const atr = await database.get(
+      'SELECT * FROM atr_documents WHERE id = ?',
+      [req.params.atrId]
+    );
+    
+    if (!atr) {
+      return res.status(404).json({ error: 'ATR document not found' });
+    }
+    
+    // Verify this ATR belongs to the inferred report
+    if (atr.inferred_report_id !== parseInt(req.params.id)) {
+      return res.status(400).json({ error: 'ATR does not belong to this inferred report' });
+    }
+    
+    // Get inferred report to check permissions
+    const inferredReport = await InferredReports.getDocumentById(req.params.id);
+    if (!inferredReport) {
+      return res.status(404).json({ error: 'Inferred report not found' });
+    }
+    
+    // Check if user can delete
+    const canDelete = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      inferredReport.uploaded_by === req.user.id;
+    
+    if (!canDelete) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+    
+    // Delete from Cloudinary
+    if (atr.cloudinary_public_id) {
+      try {
+        await cloudinary.uploader.destroy(atr.cloudinary_public_id, {
+          resource_type: 'raw'
+        });
+        console.log('✅ ATR deleted from Cloudinary');
+      } catch (deleteError) {
+        console.log('⚠️ Failed to delete ATR from Cloudinary:', deleteError.message);
+      }
+    }
+    
+    // Delete from database
+    await database.run('DELETE FROM atr_documents WHERE id = ?', [req.params.atrId]);
+    
+    console.log('✅ ATR deleted successfully');
+    res.json({ message: 'ATR deleted successfully' });
+    
+  } catch (error) {
+    console.error('❌ Delete ATR error:', error);
+    res.status(500).json({ error: 'Failed to delete ATR: ' + error.message });
   }
 });
 

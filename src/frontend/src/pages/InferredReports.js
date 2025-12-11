@@ -209,23 +209,6 @@ const InferredReports = () => {
     setEditHyperlinkValue('');
   };
 
-  const handleDeleteHyperlink = async (docId) => {
-    if (!window.confirm('Are you sure you want to delete this hyperlink?')) {
-      return;
-    }
-
-    try {
-      await api.patch(`/inferred-reports/${docId}/hyperlink`, {
-        hyperlink: null
-      });
-      toast.success('Hyperlink deleted successfully');
-      fetchDocuments();
-    } catch (error) {
-      console.error('Delete hyperlink error:', error);
-      toast.error(error.response?.data?.error || 'Failed to delete hyperlink');
-    }
-  };
-
   const handleUploadAtr = async (documentId, file, site, department, comment) => {
     try {
       const formData = new FormData();
@@ -251,11 +234,33 @@ const InferredReports = () => {
     }
   };
 
+  const handleViewAtr = (atrUrl) => {
+    if (atrUrl) {
+      window.open(atrUrl, '_blank');
+    } else {
+      toast.error('ATR URL not found');
+    }
+  };
+
+  const handleDeleteAtr = async (inferredReportId, atrId, atrFilename) => {
+    if (!window.confirm(`Are you sure you want to delete the ATR "${atrFilename}"?`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/inferred-reports/${inferredReportId}/atr/${atrId}`);
+      toast.success('ATR deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete ATR error:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete ATR');
+    }
+  };
+
   return (
     <div className="upload-atr-container">
       <div className="upload-atr-header">
         <h1>Inferred Reports</h1>
-        <p>Upload and manage inferred reports for {user?.department || (isAdmin ? 'Admin' : 'your department')}</p>
       </div>
 
       {/* Filters and Search Section */}
@@ -453,22 +458,13 @@ const InferredReports = () => {
                                 🔗 Link
                               </a>
                               {doc.canEdit && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditHyperlink(doc)}
-                                    className="icon-button edit"
-                                    title="Edit hyperlink"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteHyperlink(doc.id)}
-                                    className="icon-button delete"
-                                    title="Delete hyperlink"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </>
+                                <button
+                                  onClick={() => handleEditHyperlink(doc)}
+                                  className="icon-button edit"
+                                  title="Edit hyperlink"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
                               )}
                             </>
                           ) : (
@@ -478,14 +474,40 @@ const InferredReports = () => {
                       )}
                     </td>
                     <td className="upload-atr-cell">
-                      <button
-                        onClick={() => openDetailsModal(doc)}
-                        className="upload-atr-button"
-                        title="Upload ATR Document"
-                      >
-                        <Upload size={16} />
-                        <span>Upload ATR</span>
-                      </button>
+                      {doc.hasAtr ? (
+                        <div className="atr-uploaded">
+                          <span className="atr-filename" title={doc.atrFilename}>
+                            📄 {doc.atrFilename}
+                          </span>
+                          <div className="atr-actions">
+                            <button
+                              onClick={() => handleViewAtr(doc.atrUrl)}
+                              className="icon-button view"
+                              title="View ATR"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            {doc.canDelete && (
+                              <button
+                                onClick={() => handleDeleteAtr(doc.id, doc.atrId, doc.atrFilename)}
+                                className="icon-button delete"
+                                title="Delete ATR"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => openDetailsModal(doc)}
+                          className="upload-atr-button"
+                          title="Upload ATR Document"
+                        >
+                          <Upload size={16} />
+                          <span>Upload ATR</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
