@@ -252,6 +252,31 @@ const InferredReports = () => {
     }
   };
 
+  const handleUploadAtr = async (documentId, file, site, department, comment) => {
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('siteName', site);
+      formData.append('department', department);
+      if (comment) formData.append('comment', comment);
+
+      await api.post(`/inferred-reports/${documentId}/upload-atr`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('ATR uploaded successfully!');
+      closeDetailsModal();
+      fetchDocuments();
+    } catch (error) {
+      console.error('Upload ATR error:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to upload ATR';
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   return (
     <div className="upload-atr-container">
       <div className="upload-atr-header">
@@ -434,9 +459,7 @@ const InferredReports = () => {
         onUpdateHyperlink={handleUpdateHyperlink}
         onDeleteComment={handleDeleteComment}
         onDeleteHyperlink={handleDeleteHyperlink}
-        onUploadAiReport={() => {}}
-        onDeleteAiReport={() => {}}
-        onViewAiReport={() => {}}
+        onUploadAtr={handleUploadAtr}
       />
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Trash2, Search, Filter, Edit2, Check, X } from 'lucide-react';
 import '../styles/UploadATR.css';
 
 const UploadedATR = () => {
@@ -12,6 +12,8 @@ const UploadedATR = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [siteFilter, setSiteFilter] = useState('');
+  const [editingComment, setEditingComment] = useState(null);
+  const [editCommentValue, setEditCommentValue] = useState('');
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -86,6 +88,28 @@ const UploadedATR = () => {
     setSearchTerm('');
     setDateFilter('');
     setSiteFilter('');
+  };
+
+  const handleEditComment = (doc) => {
+    setEditingComment(doc.id);
+    setEditCommentValue(doc.comment || '');
+  };
+
+  const handleSaveComment = async (docId) => {
+    try {
+      await api.patch(`/uploaded-atr/${docId}/comment`, { comment: editCommentValue });
+      toast.success('Comment updated successfully');
+      setEditingComment(null);
+      fetchATRDocuments();
+    } catch (error) {
+      console.error('Update comment error:', error);
+      toast.error('Failed to update comment');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+    setEditCommentValue('');
   };
 
   const formatDate = (dateString) => {
@@ -188,6 +212,8 @@ const UploadedATR = () => {
                 <tr>
                   <th>Filename</th>
                   <th>Site Name</th>
+                  <th>Department</th>
+                  <th>Comment</th>
                   <th>Upload Date</th>
                   <th>Actions</th>
                 </tr>
@@ -202,6 +228,49 @@ const UploadedATR = () => {
                       </div>
                     </td>
                     <td>{doc.siteName || 'N/A'}</td>
+                    <td>{doc.department || 'N/A'}</td>
+                    <td className="comment-cell">
+                      {editingComment === doc.id ? (
+                        <div className="edit-field">
+                          <textarea
+                            value={editCommentValue}
+                            onChange={(e) => setEditCommentValue(e.target.value)}
+                            className="comment-textarea"
+                            rows={2}
+                            maxLength={500}
+                          />
+                          <div className="edit-actions-inline">
+                            <button
+                              onClick={() => handleSaveComment(doc.id)}
+                              className="icon-button save"
+                              title="Save"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="icon-button cancel"
+                              title="Cancel"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="view-field">
+                          <span className="field-value">{doc.comment || '-'}</span>
+                          {doc.canEdit && (
+                            <button
+                              onClick={() => handleEditComment(doc)}
+                              className="icon-button edit"
+                              title="Edit Comment"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td>{formatDate(doc.uploadDate)}</td>
                     <td className="actions-cell">
                       <button

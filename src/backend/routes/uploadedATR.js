@@ -57,6 +57,8 @@ router.get('/list', authenticateToken, async (req, res) => {
         uploadedBy: doc.uploaded_by_name || 'Unknown',
         uploadDate: doc.upload_date,
         fileSize: doc.file_size,
+        comment: doc.comment || null,
+        inferredReportId: doc.inferred_report_id,
         canDelete: req.user.role === 'admin' || req.user.userType === 'admin',
         canEdit: req.user.role === 'admin' || req.user.userType === 'admin' || doc.uploaded_by === req.user.id
       }))
@@ -89,6 +91,34 @@ router.get('/view/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ View ATR document error:', error);
     res.status(500).json({ error: 'Failed to access document: ' + error.message });
+  }
+});
+
+// Update ATR comment
+router.patch('/:id/comment', authenticateToken, async (req, res) => {
+  try {
+    const { comment } = req.body;
+    const document = await UploadedATR.getATRDocumentById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({ error: 'ATR document not found' });
+    }
+
+    // Check if user can edit
+    const canEdit = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      document.uploaded_by === req.user.id;
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    await UploadedATR.updateATRComment(req.params.id, comment);
+    res.json({ message: 'Comment updated successfully', comment });
+
+  } catch (error) {
+    console.error('❌ Update ATR comment error:', error);
+    res.status(500).json({ error: 'Failed to update comment: ' + error.message });
   }
 });
 

@@ -433,6 +433,104 @@ router.delete('/:id/ai-report', authenticateToken, async (req, res) => {
   }
 });
 
+// Upload ATR for an inferred report
+router.post('/:id/upload-atr', authenticateToken, upload.single('pdf'), async (req, res) => {
+  try {
+    console.log('🔍 ATR Upload Request Started for Inferred Report:', req.params.id);
+    console.log('📤 User:', req.user?.username);
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file provided' });
+    }
+
+    const { siteName, department, comment } = req.body;
+
+    if (!siteName || !department) {
+      return res.status(400).json({ error: 'Site name and department are required' });
+    }
+
+    // Verify inferred report exists
+    const inferredReport = await InferredReports.getDocumentById(req.params.id);
+    if (!inferredReport) {
+      return res.status(404).json({ error: 'Inferred report not found' });
+    }
+
+    // Check if user can upload ATR for this report
+    const canUpload = req.user.role === 'admin' ||
+      req.user.userType === 'admin' ||
+      inferredReport.uploaded_by === req.user.id;
+
+    if (!canUpload) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const departmentFolder = getDepartmentFolder(department);
+    const timestamp = Date.now();
+    const filename = `atr_${timestamp}_${req.file.originalname}`;
+
+    console.log('☁️ Starting Cloudinary upload for ATR...');
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: `atr-documents/${departmentFolder}`,
+          public_id: filename.replace('.pdf', ''),
+          format: 'pdf',
+          type: 'upload',
+          access_mode: 'public'
+        },
+        (error, result) => {
+          if (error) {
+            console.log('❌ Cloudinary upload failed:', error.message);
+            reject(error);
+          } else {
+            console.log('✅ Cloudinary upload successful:', result.secure_url);
+            resolve(result);
+          }
+        }
+      ).end(req.file.buffer);
+    });
+
+    // Save to atr_documents table
+    console.log('💾 Saving ATR to database...');
+    const database = require('../utils/databaseHybrid');
+    const result = await database.run(
+      `INSERT INTO atr_documents 
+       (filename, cloudinary_url, cloudinary_public_id, site_name, department, uploaded_by, file_size, comment, inferred_report_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.file.originalname,
+        uploadResult.secure_url,
+        uploadResult.public_id,
+        siteName,
+        department,
+        req.user.id,
+        req.file.size,
+        comment || null,
+        req.params.id
+      ]
+    );
+
+    console.log('✅ ATR saved successfully, ID:', result.id);
+
+    res.status(201).json({
+      message: 'ATR uploaded successfully',
+      atr: {
+        id: result.id,
+        filename: req.file.originalname,
+        siteName,
+        department,
+        comment: comment || null,
+        inferredReportId: req.params.id
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ ATR Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload ATR: ' + error.message });
+  }
+});
+
 // Delete Inferred Report document
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {

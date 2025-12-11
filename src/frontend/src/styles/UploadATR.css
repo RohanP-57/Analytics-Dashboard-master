@@ -1443,3 +1443,79 @@
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+
+/* ATR Upload Form Styles */
+.atr-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.atr-upload-form .form-group {
+  margin-bottom: 0;
+}
+
+.file-selected-info {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Comment Cell Editing */
+.comment-cell {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.comment-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.comment-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edit-actions-inline {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.view-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.view-field .field-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* Responsive for comment editing */
+@media (max-width: 1024px) {
+  .comment-cell {
+    min-width: 180px;
+  }
+}

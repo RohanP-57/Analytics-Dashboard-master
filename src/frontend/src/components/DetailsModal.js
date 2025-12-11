@@ -9,21 +9,52 @@ const DetailsModal = ({
   onUpdateHyperlink,
   onDeleteComment,
   onDeleteHyperlink,
-  onUploadAiReport,
-  onDeleteAiReport,
-  onViewAiReport
+  onUploadAtr
 }) => {
   const [detailsModalComment, setDetailsModalComment] = useState('');
   const [detailsModalHyperlink, setDetailsModalHyperlink] = useState('');
   const [isEditingInModal, setIsEditingInModal] = useState({ comment: false, hyperlink: false });
+  
+  // ATR upload states
+  const [atrFile, setAtrFile] = useState(null);
+  const [atrSite, setAtrSite] = useState('');
+  const [atrDepartment, setAtrDepartment] = useState('');
+  const [atrComment, setAtrComment] = useState('');
+  const [uploadingAtr, setUploadingAtr] = useState(false);
 
   useEffect(() => {
     if (document) {
       setDetailsModalComment(document.comment || '');
       setDetailsModalHyperlink(document.hyperlink || '');
       setIsEditingInModal({ comment: false, hyperlink: false });
+      // Reset ATR form
+      setAtrFile(null);
+      setAtrSite('');
+      setAtrDepartment('');
+      setAtrComment('');
+      setUploadingAtr(false);
     }
   }, [document]);
+
+  const handleUploadAtr = async () => {
+    if (!atrFile || !atrSite || !atrDepartment) {
+      return;
+    }
+
+    setUploadingAtr(true);
+    try {
+      await onUploadAtr(document.id, atrFile, atrSite, atrDepartment, atrComment);
+      // Reset form
+      setAtrFile(null);
+      setAtrSite('');
+      setAtrDepartment('');
+      setAtrComment('');
+    } catch (error) {
+      console.error('Upload ATR error:', error);
+    } finally {
+      setUploadingAtr(false);
+    }
+  };
 
   const handleUpdateComment = async () => {
     await onUpdateComment(document.id, detailsModalComment);
@@ -43,10 +74,6 @@ const DetailsModal = ({
   const handleDeleteHyperlink = async () => {
     await onDeleteHyperlink(document.id);
     setDetailsModalHyperlink('');
-  };
-
-  const handleUploadAiReport = async (file) => {
-    await onUploadAiReport(document.id, file);
   };
 
   const formatDate = (dateString) => {
@@ -175,47 +202,104 @@ const DetailsModal = ({
             </div>
           </div>
 
-          {/* AI Report Section */}
+          {/* ATR Upload Section */}
           <div className="detail-card">
             <div className="detail-card-header">
-              <h4>📊 AI Report PDF</h4>
+              <h4>📊 Upload ATR</h4>
             </div>
             <div className="detail-card-body">
-              {document.ai_report_url ? (
-                <div className="view-section">
-                  <div className="file-preview">
-                    <FileText size={32} className="file-icon-large" />
-                    <p className="file-label">AI Report Available</p>
-                  </div>
-                  <div className="view-actions">
-                    <button className="btn-view" onClick={() => onViewAiReport(document.ai_report_url)}>
-                      <Eye size={16} /> View Report
-                    </button>
-                    {document.canEdit && (
-                      <button className="btn-delete" onClick={() => onDeleteAiReport(document.id)}>
-                        <Trash2 size={16} /> Delete
-                      </button>
+              {document.canEdit && (
+                <div className="atr-upload-form">
+                  <div className="form-group">
+                    <label htmlFor="atr-file">PDF File *</label>
+                    <input
+                      type="file"
+                      id="atr-file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        if (e.target.files[0]) {
+                          setAtrFile(e.target.files[0]);
+                        }
+                      }}
+                      className="modal-input"
+                    />
+                    {atrFile && (
+                      <div className="file-selected-info">
+                        📄 {atrFile.name} ({formatFileSize(atrFile.size)})
+                      </div>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="empty-section">
-                  {document.canEdit ? (
-                    <>
-                      <p className="empty-text">No AI report uploaded</p>
-                      <label className="btn-add">
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => e.target.files[0] && handleUploadAiReport(e.target.files[0])}
-                          style={{ display: 'none' }}
-                        />
-                        <Upload size={16} /> Upload AI Report
-                      </label>
-                    </>
-                  ) : (
-                    <p className="empty-text">No AI report</p>
-                  )}
+
+                  <div className="form-group">
+                    <label htmlFor="atr-site">Site *</label>
+                    <select
+                      id="atr-site"
+                      value={atrSite}
+                      onChange={(e) => setAtrSite(e.target.value)}
+                      className="modal-input"
+                      required
+                    >
+                      <option value="">Select a site...</option>
+                      <option value="Site A">Site A</option>
+                      <option value="Site B">Site B</option>
+                      <option value="Site C">Site C</option>
+                      <option value="Bukaro">Bukaro</option>
+                      <option value="BNK Mines">BNK Mines</option>
+                      <option value="Dhori">Dhori</option>
+                      <option value="Kathara">Kathara</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="atr-department">Department *</label>
+                    <select
+                      id="atr-department"
+                      value={atrDepartment}
+                      onChange={(e) => setAtrDepartment(e.target.value)}
+                      className="modal-input"
+                      required
+                    >
+                      <option value="">Select a department...</option>
+                      <option value="E&T Department">E&T Department</option>
+                      <option value="Security Department">Security Department</option>
+                      <option value="Operation Department">Operation Department</option>
+                      <option value="Survey Department">Survey Department</option>
+                      <option value="Safety Department">Safety Department</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Super Admin">Super Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="atr-comment">Comment (Optional)</label>
+                    <textarea
+                      id="atr-comment"
+                      value={atrComment}
+                      onChange={(e) => setAtrComment(e.target.value)}
+                      className="modal-textarea"
+                      placeholder="Add a comment about this ATR..."
+                      rows={3}
+                      maxLength={500}
+                    />
+                    <span className="char-count">{atrComment.length}/500</span>
+                  </div>
+
+                  <button 
+                    className="btn-add" 
+                    onClick={handleUploadAtr}
+                    disabled={!atrFile || !atrSite || !atrDepartment || uploadingAtr}
+                  >
+                    {uploadingAtr ? (
+                      <>
+                        <div className="spinner-small"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} /> Upload ATR
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </div>
