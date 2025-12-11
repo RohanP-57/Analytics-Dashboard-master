@@ -362,35 +362,49 @@ const InferredReports = () => {
             <table className="documents-table">
               <thead>
                 <tr>
-                  <th>Filename</th>
+                  <th>S. No.</th>
                   <th>Site Name</th>
+                  <th>Date/Time</th>
+                  <th>Video Link</th>
                   <th>Upload ATR</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {documents.filter(doc => doc && doc.id).map((doc) => (
+                {documents.filter(doc => doc && doc.id).map((doc, index) => (
                   <tr key={doc.id}>
-                    <td className="filename-cell">
-                      <div className="file-info">
-                        <span className="file-icon">📄</span>
-                        <span className="filename">{doc.filename || 'Unknown'}</span>
-                      </div>
-                    </td>
+                    <td>{index + 1}</td>
                     <td>{doc.site_name || 'N/A'}</td>
-                    <td className="details-cell">
-                      <div className="details-badges">
-                        {doc.comment && <span className="badge comment-badge" title="Has comment">💬</span>}
-                        {doc.hyperlink && <span className="badge hyperlink-badge" title="Has hyperlink">🔗</span>}
-                        {!doc.comment && !doc.hyperlink && <span className="no-details">-</span>}
-                      </div>
+                    <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : 'N/A'}</td>
+                    <td className="video-link-cell">
+                      {doc.hyperlink ? (
+                        <a 
+                          href={doc.hyperlink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="video-link"
+                          title="Open video link"
+                        >
+                          🔗 Link
+                        </a>
+                      ) : (
+                        <span className="no-link">-</span>
+                      )}
+                    </td>
+                    <td className="upload-atr-cell">
                       <button
                         onClick={() => openDetailsModal(doc)}
-                        className="details-button"
-                        title="View/Edit Details"
+                        className="upload-atr-button"
+                        title="Upload ATR Document"
                       >
-                        <Eye size={16} />
-                        <span>Details</span>
+                        <Upload size={16} />
+                        <span>Upload ATR</span>
                       </button>
                     </td>
                     <td className="actions-cell">

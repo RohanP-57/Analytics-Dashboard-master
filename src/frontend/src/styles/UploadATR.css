@@ -1519,3 +1519,60 @@
     min-width: 180px;
   }
 }
+
+/* Video Link Cell Styles */
+.video-link-cell {
+  text-align: center;
+}
+
+.video-link-cell .video-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.video-link-cell .video-link:hover {
+  background-color: #eff6ff;
+  text-decoration: underline;
+}
+
+.video-link-cell .no-link {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Upload ATR Cell Styles */
+.upload-atr-cell {
+  text-align: center;
+}
+
+.upload-atr-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-atr-button:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.upload-atr-button:active {
+  transform: translateY(0);
+}
