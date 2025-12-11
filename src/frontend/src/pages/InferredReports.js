@@ -13,6 +13,7 @@ const InferredReports = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedSite, setSelectedSite] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
@@ -36,7 +37,7 @@ const InferredReports = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [selectedSite, searchTerm]);
+  }, [selectedSite, dateFilter, searchTerm]);
 
   const fetchDocuments = async () => {
     try {
@@ -46,6 +47,9 @@ const InferredReports = () => {
       // Add filters to params
       if (selectedSite !== 'all') {
         params.site = selectedSite;
+      }
+      if (dateFilter) {
+        params.startDate = dateFilter;
       }
       if (searchTerm.trim()) {
         params.search = searchTerm.trim();
@@ -69,6 +73,7 @@ const InferredReports = () => {
 
   const handleClearFilters = () => {
     setSelectedSite('all');
+    setDateFilter('');
     setSearchTerm('');
   };
 
@@ -288,6 +293,16 @@ const InferredReports = () => {
           </div>
           
           <div className="filter-controls">
+            <div className="filter-group">
+              <label>Date Filter:</label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="date-filter"
+              />
+            </div>
+
             <div className="filter-group">
               <label>Site Filter:</label>
               <select

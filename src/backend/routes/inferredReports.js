@@ -147,7 +147,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
 // Get Inferred Reports with filtering
 router.get('/list', authenticateToken, async (req, res) => {
   try {
-    const { department, site, search } = req.query;
+    const { department, site, startDate, search } = req.query;
     let documents;
 
     // Admin can see all documents, users only see their department's documents
@@ -167,6 +167,14 @@ router.get('/list', authenticateToken, async (req, res) => {
     
     if (site && site !== 'all') {
       documents = documents.filter(doc => doc.site_name === site);
+    }
+
+    if (startDate) {
+      const filterDate = new Date(startDate);
+      documents = documents.filter(doc => {
+        const docDate = new Date(doc.upload_date);
+        return docDate >= filterDate;
+      });
     }
     
     if (search && search.trim()) {
