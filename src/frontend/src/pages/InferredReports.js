@@ -363,6 +363,7 @@ const InferredReports = () => {
               <thead>
                 <tr>
                   <th>S. No.</th>
+                  <th>File Name</th>
                   <th>Site Name</th>
                   <th>Date/Time</th>
                   <th>Video Link</th>
@@ -374,6 +375,12 @@ const InferredReports = () => {
                 {documents.filter(doc => doc && doc.id).map((doc, index) => (
                   <tr key={doc.id}>
                     <td>{index + 1}</td>
+                    <td className="filename-cell">
+                      <div className="file-info">
+                        <span className="file-icon">📄</span>
+                        <span className="filename">{doc.filename || 'Unknown'}</span>
+                      </div>
+                    </td>
                     <td>{doc.site_name || 'N/A'}</td>
                     <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
                       year: 'numeric',
