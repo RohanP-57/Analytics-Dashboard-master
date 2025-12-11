@@ -50,6 +50,12 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
     console.log('📤 User:', req.user?.username, 'Department:', req.user?.department);
     console.log('📁 File received:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
 
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin' && req.user.username !== 'AEROVANIA MASTER') {
+      console.log('❌ Access denied - User is not admin');
+      return res.status(403).json({ error: 'Only admins can upload inferred reports' });
+    }
+
     if (!req.file) {
       console.log('❌ No file provided in request');
       return res.status(400).json({ error: 'No PDF file provided' });
@@ -327,20 +333,17 @@ router.patch('/:id/comment', authenticateToken, async (req, res) => {
 // Update hyperlink
 router.patch('/:id/hyperlink', authenticateToken, async (req, res) => {
   try {
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin' && req.user.username !== 'AEROVANIA MASTER') {
+      console.log('❌ Access denied - User is not admin');
+      return res.status(403).json({ error: 'Only admins can edit hyperlinks' });
+    }
+
     const { hyperlink } = req.body;
     const document = await InferredReports.getDocumentById(req.params.id);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
-    }
-
-    // Check if user can edit
-    const canEdit = req.user.role === 'admin' ||
-      req.user.userType === 'admin' ||
-      document.uploaded_by === req.user.id;
-
-    if (!canEdit) {
-      return res.status(403).json({ error: 'Permission denied' });
     }
 
     await InferredReports.updateHyperlink(req.params.id, hyperlink);
@@ -639,19 +642,16 @@ router.delete('/:id/atr/:atrId', authenticateToken, async (req, res) => {
 // Delete Inferred Report document
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
+    // Check if user is admin
+    if (req.user.role !== 'admin' && req.user.userType !== 'admin' && req.user.username !== 'AEROVANIA MASTER') {
+      console.log('❌ Access denied - User is not admin');
+      return res.status(403).json({ error: 'Only admins can delete inferred reports' });
+    }
+
     const document = await InferredReports.getDocumentById(req.params.id);
 
     if (!document) {
       return res.status(404).json({ error: 'Document not found' });
-    }
-
-    // Check if user can delete this document
-    const canDelete = req.user.role === 'admin' ||
-      req.user.userType === 'admin' ||
-      document.uploaded_by === req.user.id;
-
-    if (!canDelete) {
-      return res.status(403).json({ error: 'Permission denied' });
     }
 
     // Delete original document from Cloudinary

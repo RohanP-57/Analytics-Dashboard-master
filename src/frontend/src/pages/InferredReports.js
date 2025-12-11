@@ -314,17 +314,19 @@ const InferredReports = () => {
         </div>
       </div>
 
-      {/* Upload Button */}
-      <div className="upload-button-section">
-        <button 
-          className="upload-file-button"
-          onClick={() => setShowUploadModal(true)}
-          disabled={uploading}
-        >
-          <Upload size={20} />
-          Upload Inferred Report
-        </button>
-      </div>
+      {/* Upload Button - Admin Only */}
+      {isAdmin && (
+        <div className="upload-button-section">
+          <button 
+            className="upload-file-button"
+            onClick={() => setShowUploadModal(true)}
+            disabled={uploading}
+          >
+            <Upload size={20} />
+            Upload Inferred Report
+          </button>
+        </div>
+      )}
 
       {/* Upload Modal */}
       <UploadModal
@@ -368,7 +370,7 @@ const InferredReports = () => {
                 <tr>
                   <th>S. No.</th>
                   <th>File Name</th>
-                  <th>Actions</th>
+                  {isAdmin && <th>Actions</th>}
                   <th>Site Name</th>
                   <th>Date/Time</th>
                   <th>Video Link</th>
@@ -393,24 +395,26 @@ const InferredReports = () => {
                         <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
                     </td>
-                    <td className="actions-cell">
-                      <button
-                        onClick={() => handleView(doc.id)}
-                        className="icon-button view"
-                        title="View Document"
-                      >
-                        <Eye size={18} />
-                      </button>
-                      {doc.canDelete && (
+                    {isAdmin && (
+                      <td className="actions-cell">
                         <button
-                          onClick={() => handleDelete(doc.id, doc.filename)}
-                          className="icon-button delete"
-                          title="Delete Document"
+                          onClick={() => handleView(doc.id)}
+                          className="icon-button view"
+                          title="View Document"
                         >
-                          <Trash2 size={18} />
+                          <Eye size={18} />
                         </button>
-                      )}
-                    </td>
+                        {doc.canDelete && (
+                          <button
+                            onClick={() => handleDelete(doc.id, doc.filename)}
+                            className="icon-button delete"
+                            title="Delete Document"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </td>
+                    )}
                     <td>{doc.site_name || 'N/A'}</td>
                     <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
                       year: 'numeric',
@@ -457,7 +461,7 @@ const InferredReports = () => {
                               >
                                 🔗 Link
                               </a>
-                              {doc.canEdit && (
+                              {doc.canEdit && isAdmin && (
                                 <button
                                   onClick={() => handleEditHyperlink(doc)}
                                   className="icon-button edit"
