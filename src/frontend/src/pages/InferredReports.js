@@ -59,6 +59,8 @@ const InferredReports = () => {
 
       const response = await api.get('/inferred-reports/list', { params });
       const documentsData = response.data?.documents || [];
+      console.log('📊 Fetched documents:', documentsData);
+      console.log('📊 First document hyperlink:', documentsData[0]?.hyperlink);
       setDocuments(Array.isArray(documentsData) ? documentsData : []);
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -369,7 +371,15 @@ const InferredReports = () => {
                 </tr>
               </thead>
               <tbody>
-                {documents.filter(doc => doc && doc.id).map((doc, index) => (
+                {documents.filter(doc => doc && doc.id).map((doc, index) => {
+                  // Debug logging for hyperlink
+                  if (index === 0) {
+                    console.log('🔍 Document hyperlink value:', doc.hyperlink);
+                    console.log('🔍 Document hyperlink type:', typeof doc.hyperlink);
+                    console.log('🔍 Full document:', doc);
+                  }
+                  
+                  return (
                   <tr key={doc.id}>
                     <td>{index + 1}</td>
                     <td className="filename-cell">
@@ -478,7 +488,8 @@ const InferredReports = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>
