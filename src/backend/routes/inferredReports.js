@@ -55,8 +55,14 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       return res.status(400).json({ error: 'No PDF file provided' });
     }
 
-    // Get optional fields from request body
-    const { comment, hyperlink, siteName } = req.body;
+    // Get required fields from request body
+    const { hyperlink, siteName } = req.body;
+
+    // Validate hyperlink is provided
+    if (!hyperlink) {
+      console.log('❌ Hyperlink is required');
+      return res.status(400).json({ error: 'Hyperlink is required' });
+    }
 
     // Determine department based on user role
     let department = req.user.department;
@@ -115,8 +121,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       department: department,
       uploaded_by: req.user.id,
       file_size: req.file.size,
-      comment: comment || null,
-      hyperlink: hyperlink || null
+      hyperlink: hyperlink
     };
 
     const document = await InferredReports.createDocument(documentData);
@@ -130,7 +135,6 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
         department: document.department,
         upload_date: document.upload_date,
         file_size: document.file_size,
-        comment: document.comment,
         hyperlink: document.hyperlink
       }
     });

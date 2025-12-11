@@ -9,7 +9,6 @@ const UploadModal = ({
 }) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadSiteName, setUploadSiteName] = useState('');
-  const [uploadComment, setUploadComment] = useState('');
   const [uploadHyperlink, setUploadHyperlink] = useState('');
   const [dragActive, setDragActive] = useState(false);
 
@@ -54,13 +53,11 @@ const UploadModal = ({
     onUpload({
       file: uploadFile,
       siteName: uploadSiteName,
-      comment: uploadComment,
       hyperlink: uploadHyperlink
     });
     // Reset form
     setUploadFile(null);
     setUploadSiteName('');
-    setUploadComment('');
     setUploadHyperlink('');
   };
 
@@ -68,7 +65,6 @@ const UploadModal = ({
     if (!uploading) {
       setUploadFile(null);
       setUploadSiteName('');
-      setUploadComment('');
       setUploadHyperlink('');
       onClose();
     }
@@ -154,31 +150,18 @@ const UploadModal = ({
             </select>
           </div>
 
-          {/* Comment Field */}
-          <div className="form-group">
-            <label htmlFor="upload-comment">Comment (Optional)</label>
-            <textarea
-              id="upload-comment"
-              value={uploadComment}
-              onChange={(e) => setUploadComment(e.target.value)}
-              placeholder="Add a comment about this report..."
-              maxLength={500}
-              rows={3}
-            />
-            <span className="char-count">{uploadComment.length}/500</span>
-          </div>
-
           {/* Hyperlink Field */}
           <div className="form-group">
-            <label htmlFor="upload-hyperlink">Hyperlink (Optional)</label>
+            <label htmlFor="upload-hyperlink">Hyperlink *</label>
             <input
               type="url"
               id="upload-hyperlink"
               value={uploadHyperlink}
               onChange={(e) => setUploadHyperlink(e.target.value)}
               placeholder="https://drive.google.com/..."
+              required
             />
-            <span className="field-hint">Google Drive link or any URL</span>
+            <span className="field-hint">Google Drive link or any URL (required)</span>
           </div>
         </div>
 
@@ -193,7 +176,7 @@ const UploadModal = ({
           <button 
             className="upload-button"
             onClick={handleSubmit}
-            disabled={uploading || !uploadFile || !uploadSiteName}
+            disabled={uploading || !uploadFile || !uploadSiteName || !uploadHyperlink}
           >
             {uploading ? (
               <>

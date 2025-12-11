@@ -86,7 +86,7 @@ const InferredReports = () => {
     }
   };
 
-  const handleUpload = async ({ file, siteName, comment, hyperlink }) => {
+  const handleUpload = async ({ file, siteName, hyperlink }) => {
     if (!file) {
       toast.error('Please select a PDF file');
       return;
@@ -102,7 +102,7 @@ const InferredReports = () => {
       return;
     }
 
-    if (hyperlink && !isValidUrl(hyperlink)) {
+    if (!hyperlink || !isValidUrl(hyperlink)) {
       toast.error('Please enter a valid URL for the hyperlink');
       return;
     }
@@ -112,9 +112,8 @@ const InferredReports = () => {
 
       const formData = new FormData();
       formData.append('pdf', file);
-      if (siteName) formData.append('siteName', siteName);
-      if (comment) formData.append('comment', comment);
-      if (hyperlink) formData.append('hyperlink', hyperlink);
+      formData.append('siteName', siteName);
+      formData.append('hyperlink', hyperlink);
 
       await api.post('/inferred-reports/upload', formData, {
         headers: {

@@ -10,16 +10,15 @@ class InferredReportsModel {
       department, 
       uploaded_by, 
       file_size,
-      comment,
       hyperlink
     } = documentData;
 
     try {
       const result = await database.run(
         `INSERT INTO inferred_reports 
-         (filename, cloudinary_url, cloudinary_public_id, site_name, department, uploaded_by, file_size, upload_date, comment, hyperlink) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [filename, cloudinary_url, cloudinary_public_id, site_name || null, department, uploaded_by, file_size, new Date().toISOString(), comment || null, hyperlink || null]
+         (filename, cloudinary_url, cloudinary_public_id, site_name, department, uploaded_by, file_size, upload_date, hyperlink) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [filename, cloudinary_url, cloudinary_public_id, site_name || null, department, uploaded_by, file_size, new Date().toISOString(), hyperlink]
       );
 
       return {
@@ -30,8 +29,7 @@ class InferredReportsModel {
         uploaded_by,
         file_size,
         upload_date: new Date().toISOString(),
-        comment: comment || null,
-        hyperlink: hyperlink || null
+        hyperlink: hyperlink
       };
     } catch (err) {
       throw new Error(`Database error: ${err.message}`);
