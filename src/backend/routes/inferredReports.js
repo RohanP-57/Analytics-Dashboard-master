@@ -158,18 +158,13 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
 router.get('/list', authenticateToken, async (req, res) => {
   try {
     const { department, site, startDate, search } = req.query;
-    let documents;
-
-    // Admin can see all documents, users only see their department's documents
-    if (req.user.role === 'admin' || req.user.userType === 'admin') {
-      documents = await InferredReports.getAllDocuments();
-      console.log('📊 Backend - First document from DB:', documents[0]);
-    } else {
-      if (!req.user.department) {
-        return res.status(400).json({ error: 'User department not found' });
-      }
-      documents = await InferredReports.getDocumentsByDepartment(req.user.department);
-      console.log('📊 Backend - First document from DB:', documents[0]);
+    
+    // All users (admin and regular) can see all inferred reports
+    // Regular users can upload ATRs but cannot upload/edit/delete inferred reports
+    const documents = await InferredReports.getAllDocuments();
+    console.log('📊 Backend - Fetched documents count:', documents.length);
+    if (documents.length > 0) {
+      console.log('📊 Backend - First document:', documents[0]);
     }
 
     // Apply filters
