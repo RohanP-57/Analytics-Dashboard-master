@@ -421,6 +421,10 @@
   background: #f9fafb;
 }
 
+.filename-cell {
+  max-width: 400px;
+}
+
 .filename-cell .file-info {
   display: flex;
   align-items: center;
@@ -429,11 +433,16 @@
 
 .filename-cell .file-icon {
   font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .filename-cell .filename {
   font-weight: 500;
   color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 /* Editable Fields */

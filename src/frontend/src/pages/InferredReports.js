@@ -2,22 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
-import UploadModal from '../components/UploadModal';
-import DetailsModal from '../components/DetailsModal';
+import { Eye, Trash2, Search, Filter } from 'lucide-react';
 import '../styles/UploadATR.css';
 
 const InferredReports = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -87,63 +81,6 @@ const InferredReports = () => {
     setSearchTerm('');
   };
 
-  const isValidUrl = (string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
-
-  const handleUpload = async ({ file, siteName, comment, hyperlink }) => {
-    if (!file) {
-      toast.error('Please select a PDF file');
-      return;
-    }
-
-    if (file.type !== 'application/pdf') {
-      toast.error('Please select a PDF file');
-      return;
-    }
-
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error('File size must be less than 25MB');
-      return;
-    }
-
-    if (hyperlink && !isValidUrl(hyperlink)) {
-      toast.error('Please enter a valid URL for the hyperlink');
-      return;
-    }
-
-    try {
-      setUploading(true);
-
-      const formData = new FormData();
-      formData.append('pdf', file);
-      if (siteName) formData.append('siteName', siteName);
-      if (comment) formData.append('comment', comment);
-      if (hyperlink) formData.append('hyperlink', hyperlink);
-
-      await api.post('/inferred-reports/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      toast.success('Inferred Report uploaded successfully!');
-      setShowUploadModal(false);
-      fetchDocuments();
-    } catch (error) {
-      console.error('Upload error:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to upload document';
-      toast.error(errorMessage);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleView = async (documentId) => {
     try {
       const response = await api.get(`/inferred-reports/view/${documentId}`);
@@ -169,170 +106,7 @@ const InferredReports = () => {
     }
   };
 
-  const openDetailsModal = (doc) => {
-    setSelectedDocument(doc);
-    setShowDetailsModal(true);
-  };
 
-  const closeDetailsModal = () => {
-    setShowDetailsModal(false);
-    setSelectedDocument(null);
-  };
-
-  const handleUpdateComment = async (documentId, comment) => {
-    try {
-      await api.patch(`/inferred-reports/${documentId}/comment`, { comment });
-      toast.success('Comment updated');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Update comment error:', error);
-      toast.error('Failed to update comment');
-    }
-  };
-
-  const handleUpdateHyperlink = async (documentId, hyperlink) => {
-    if (hyperlink && !isValidUrl(hyperlink)) {
-      toast.error('Please enter a valid URL');
-      return;
-    }
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink });
-      toast.success('Hyperlink updated');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Update hyperlink error:', error);
-      toast.error('Failed to update hyperlink');
-    }
-  };
-
-  const handleDeleteComment = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/comment`, { comment: '' });
-      toast.success('Comment deleted');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Delete comment error:', error);
-      toast.error('Failed to delete comment');
-    }
-  };
-
-  const handleDeleteHyperlink = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this hyperlink?')) return;
-
-    try {
-      await api.patch(`/inferred-reports/${documentId}/hyperlink`, { hyperlink: '' });
-      toast.success('Hyperlink deleted');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Delete hyperlink error:', error);
-      toast.error('Failed to delete hyperlink');
-    }
-  };
-
-  const handleUploadAiReport = async (documentId, file) => {
-    if (!file) return;
-
-    if (file.type !== 'application/pdf') {
-      toast.error('Please select a PDF file');
-      return;
-    }
-
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error('File size must be less than 25MB');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('pdf', file);
-
-      await api.post(`/inferred-reports/${documentId}/ai-report`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      toast.success('AI Report PDF uploaded successfully!');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Upload AI Report error:', error);
-      toast.error('Failed to upload AI Report');
-    }
-  };
-
-  const handleViewAiReport = (aiReportUrl) => {
-    if (aiReportUrl) {
-      window.open(aiReportUrl, '_blank');
-    }
-  };
-
-  const handleDeleteAiReport = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this AI Report?')) return;
-
-    try {
-      await api.delete(`/inferred-reports/${documentId}/ai-report`);
-      toast.success('AI Report deleted');
-      fetchDocuments();
-      // Update selected document
-      const response = await api.get('/inferred-reports/list');
-      const updatedDoc = response.data?.documents?.find(d => d.id === documentId);
-      if (updatedDoc) {
-        setSelectedDocument(updatedDoc);
-      }
-    } catch (error) {
-      console.error('Delete AI Report error:', error);
-      toast.error('Failed to delete AI Report');
-    }
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   return (
     <div className="upload-atr-container">
@@ -398,26 +172,6 @@ const InferredReports = () => {
         </div>
       </div>
 
-      {/* Upload Button */}
-      <div className="upload-button-section">
-        <button 
-          className="upload-file-button"
-          onClick={() => setShowUploadModal(true)}
-          disabled={uploading}
-        >
-          <Upload size={20} />
-          Upload File
-        </button>
-      </div>
-
-      {/* Upload Modal */}
-      <UploadModal
-        showModal={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onUpload={handleUpload}
-        uploading={uploading}
-      />
-
       {/* Documents List */}
       <div className="documents-section">
         <div className="documents-header">
@@ -452,9 +206,6 @@ const InferredReports = () => {
                 <tr>
                   <th>Filename</th>
                   <th>Site Name</th>
-                  <th>Department</th>
-                  <th>Upload Date</th>
-                  <th>Details</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -468,28 +219,6 @@ const InferredReports = () => {
                       </div>
                     </td>
                     <td>{doc.site_name || 'N/A'}</td>
-                    <td>{doc.department || 'N/A'}</td>
-                    <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
-                    
-                    {/* Details Column with Badges */}
-                    <td className="details-cell">
-                      <div className="details-badges">
-                        {doc.comment && <span className="badge comment-badge" title="Has comment">💬</span>}
-                        {doc.ai_report_url && <span className="badge ai-report-badge" title="Has AI report">📊</span>}
-                        {doc.hyperlink && <span className="badge hyperlink-badge" title="Has hyperlink">🔗</span>}
-                        {!doc.comment && !doc.ai_report_url && !doc.hyperlink && <span className="no-details">-</span>}
-                      </div>
-                      <button
-                        onClick={() => openDetailsModal(doc)}
-                        className="details-button"
-                        title="View/Edit Details"
-                      >
-                        <Eye size={16} />
-                        <span>Details</span>
-                      </button>
-                    </td>
-
-                    {/* Actions Column */}
                     <td className="actions-cell">
                       <button
                         onClick={() => handleView(doc.id)}
@@ -516,19 +245,6 @@ const InferredReports = () => {
         )}
       </div>
 
-      {/* Details Modal */}
-      <DetailsModal
-        show={showDetailsModal}
-        document={selectedDocument}
-        onClose={closeDetailsModal}
-        onUpdateComment={handleUpdateComment}
-        onUpdateHyperlink={handleUpdateHyperlink}
-        onDeleteComment={handleDeleteComment}
-        onDeleteHyperlink={handleDeleteHyperlink}
-        onUploadAiReport={handleUploadAiReport}
-        onDeleteAiReport={handleDeleteAiReport}
-        onViewAiReport={handleViewAiReport}
-      />
     </div>
   );
 };

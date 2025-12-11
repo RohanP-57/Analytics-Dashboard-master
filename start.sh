@@ -17,6 +17,10 @@ mkdir -p uploads data logs
 # Set proper permissions
 chmod 755 uploads data logs
 
+# Run database migrations
+echo "🔄 Running database migrations..."
+node src/backend/scripts/addSiteColumn.js || echo "⚠️ Migration failed or already applied"
+
 # Start the application
 echo "🎯 Starting server..."
 exec node server.js
