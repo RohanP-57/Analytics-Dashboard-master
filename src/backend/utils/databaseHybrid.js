@@ -176,87 +176,9 @@ class HybridDatabase {
   }
 
   createSQLiteUserTables() {
-    console.log('🔄 Creating user tables in SQLite (fallback mode)...');
-    
-    // Admin table in SQLite
-    this.sqliteDb.run(`
-      CREATE TABLE IF NOT EXISTS admin (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        full_name TEXT,
-        permissions TEXT DEFAULT 'all',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `, (err) => {
-      if (err) console.error('Error creating admin table in SQLite:', err);
-      else console.log('✅ Admin table ready (SQLite fallback)');
-    });
-
-    // User table in SQLite
-    this.sqliteDb.run(`
-      CREATE TABLE IF NOT EXISTS "user" (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        full_name TEXT,
-        department TEXT,
-        access_level TEXT DEFAULT 'basic',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `, (err) => {
-      if (err) console.error('Error creating user table in SQLite:', err);
-      else console.log('✅ User table ready (SQLite fallback)');
-    });
-
-    // Inferred Reports table in SQLite (fallback)
-    this.sqliteDb.run(`
-      CREATE TABLE IF NOT EXISTS inferred_reports (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT NOT NULL,
-        site_name TEXT,
-        cloudinary_url TEXT NOT NULL,
-        cloudinary_public_id TEXT NOT NULL,
-        department TEXT NOT NULL,
-        uploaded_by INTEGER NOT NULL,
-        file_size INTEGER,
-        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-        comment TEXT,
-        ai_report_url TEXT,
-        ai_report_public_id TEXT,
-        hyperlink TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `, (err) => {
-      if (err) console.error('Error creating inferred_reports table in SQLite:', err);
-      else console.log('✅ Inferred Reports table ready (SQLite fallback)');
-    });
-
-    // Uploaded ATR table in SQLite (fallback)
-    this.sqliteDb.run(`
-      CREATE TABLE IF NOT EXISTS uploaded_atr (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        serial_no INTEGER,
-        site_name TEXT NOT NULL,
-        date_time DATETIME NOT NULL,
-        video_link TEXT,
-        atr_link TEXT,
-        file_name TEXT,
-        department TEXT,
-        uploaded_by INTEGER NOT NULL,
-        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-        file_size INTEGER,
-        comment TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `, (err) => {
-      if (err) console.error('Error creating uploaded_atr table in SQLite:', err);
-      else console.log('✅ Uploaded ATR table ready (SQLite fallback)');
-    });
+    console.log('⚠️ PostgreSQL not available - user tables will not work without PostgreSQL!');
+    console.log('⚠️ Please ensure DATABASE_URL is set for production use.');
+    // We do NOT create user tables in SQLite - PostgreSQL is required for users
   }
 
   async createPostgresTables() {
@@ -343,8 +265,29 @@ class HybridDatabase {
       `);
       console.log('✅ Uploaded ATR table created');
 
+      // ATR Documents table (linked to inferred reports)
+      console.log('🔄 Creating atr_documents table...');
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS atr_documents (
+          id SERIAL PRIMARY KEY,
+          filename TEXT NOT NULL,
+          cloudinary_url TEXT NOT NULL,
+          cloudinary_public_id TEXT NOT NULL,
+          site_name TEXT NOT NULL,
+          department TEXT NOT NULL,
+          uploaded_by INTEGER NOT NULL,
+          file_size INTEGER,
+          upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          comment TEXT,
+          inferred_report_id INTEGER,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ ATR Documents table created');
+
       await client.query('COMMIT');
-      console.log('✅ PostgreSQL tables created successfully (admin, user, inferred_reports, uploaded_atr)');
+      console.log('✅ PostgreSQL tables created successfully (admin, user, inferred_reports, uploaded_atr, atr_documents)');
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('❌ Error creating PostgreSQL tables:', error);
@@ -460,7 +403,7 @@ class HybridDatabase {
 
   // Determine which database to use based on table
   getDatabase(table) {
-    const postgresTables = ['admin', 'user', 'inferred_reports', 'uploaded_atr'];
+    const postgresTables = ['admin', 'user', 'inferred_reports', 'uploaded_atr', 'atr_documents'];
     
     if (this.usePostgres && postgresTables.includes(table)) {
       return 'postgres';
