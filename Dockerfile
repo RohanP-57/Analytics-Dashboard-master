@@ -17,8 +17,13 @@ RUN ls -la build/ && test -f build/index.html
 # Backend Production Stage
 FROM node:18-alpine AS production
 
-# Install essential system dependencies
-RUN apk add --no-cache sqlite curl
+# Install essential system dependencies including build tools for sqlite3
+RUN apk add --no-cache \
+    sqlite \
+    curl \
+    python3 \
+    make \
+    g++
 
 WORKDIR /app
 
