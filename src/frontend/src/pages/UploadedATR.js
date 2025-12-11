@@ -258,7 +258,7 @@ const UploadedATR = () => {
             <div className="spinner"></div>
             <p>Loading ATR documents...</p>
           </div>
-        ) : filteredDocuments.length === 0 ? (
+        ) : atrDocuments.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📁</div>
             <h3>No ATR documents found</h3>
