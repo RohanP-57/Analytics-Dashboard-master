@@ -216,6 +216,7 @@ class HybridDatabase {
       CREATE TABLE IF NOT EXISTS inferred_reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
+        site_name TEXT,
         cloudinary_url TEXT NOT NULL,
         cloudinary_public_id TEXT NOT NULL,
         department TEXT NOT NULL,
@@ -225,11 +226,36 @@ class HybridDatabase {
         comment TEXT,
         ai_report_url TEXT,
         ai_report_public_id TEXT,
-        hyperlink TEXT
+        hyperlink TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `, (err) => {
       if (err) console.error('Error creating inferred_reports table in SQLite:', err);
       else console.log('✅ Inferred Reports table ready (SQLite fallback)');
+    });
+
+    // Uploaded ATR table in SQLite (fallback)
+    this.sqliteDb.run(`
+      CREATE TABLE IF NOT EXISTS uploaded_atr (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        serial_no INTEGER,
+        site_name TEXT NOT NULL,
+        date_time DATETIME NOT NULL,
+        video_link TEXT,
+        atr_link TEXT,
+        file_name TEXT,
+        department TEXT,
+        uploaded_by INTEGER NOT NULL,
+        upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        file_size INTEGER,
+        comment TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `, (err) => {
+      if (err) console.error('Error creating uploaded_atr table in SQLite:', err);
+      else console.log('✅ Uploaded ATR table ready (SQLite fallback)');
     });
   }
 
@@ -272,12 +298,13 @@ class HybridDatabase {
       `);
       console.log('✅ User table created');
 
-      // Inferred Reports table (renamed from ATR documents)
+      // Inferred Reports table
       console.log('🔄 Creating inferred_reports table...');
       await client.query(`
         CREATE TABLE IF NOT EXISTS inferred_reports (
           id SERIAL PRIMARY KEY,
           filename TEXT NOT NULL,
+          site_name TEXT,
           cloudinary_url TEXT NOT NULL,
           cloudinary_public_id TEXT NOT NULL,
           department TEXT NOT NULL,
@@ -287,13 +314,37 @@ class HybridDatabase {
           comment TEXT,
           ai_report_url TEXT,
           ai_report_public_id TEXT,
-          hyperlink TEXT
+          hyperlink TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
       console.log('✅ Inferred Reports table created');
 
+      // Uploaded ATR table
+      console.log('🔄 Creating uploaded_atr table...');
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS uploaded_atr (
+          id SERIAL PRIMARY KEY,
+          serial_no INTEGER,
+          site_name TEXT NOT NULL,
+          date_time TIMESTAMP NOT NULL,
+          video_link TEXT,
+          atr_link TEXT,
+          file_name TEXT,
+          department TEXT,
+          uploaded_by INTEGER NOT NULL,
+          upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          file_size INTEGER,
+          comment TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ Uploaded ATR table created');
+
       await client.query('COMMIT');
-      console.log('✅ PostgreSQL tables created successfully (admin, user, inferred_reports)');
+      console.log('✅ PostgreSQL tables created successfully (admin, user, inferred_reports, uploaded_atr)');
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('❌ Error creating PostgreSQL tables:', error);

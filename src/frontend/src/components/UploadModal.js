@@ -8,9 +8,21 @@ const UploadModal = ({
   uploading 
 }) => {
   const [uploadFile, setUploadFile] = useState(null);
+  const [uploadSiteName, setUploadSiteName] = useState('');
   const [uploadComment, setUploadComment] = useState('');
   const [uploadHyperlink, setUploadHyperlink] = useState('');
   const [dragActive, setDragActive] = useState(false);
+
+  // Available sites
+  const sites = [
+    'Site A',
+    'Site B', 
+    'Site C',
+    'Bukaro',
+    'BNK Mines',
+    'Dhori',
+    'Kathara'
+  ];
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -41,11 +53,13 @@ const UploadModal = ({
   const handleSubmit = () => {
     onUpload({
       file: uploadFile,
+      siteName: uploadSiteName,
       comment: uploadComment,
       hyperlink: uploadHyperlink
     });
     // Reset form
     setUploadFile(null);
+    setUploadSiteName('');
     setUploadComment('');
     setUploadHyperlink('');
   };
@@ -53,6 +67,7 @@ const UploadModal = ({
   const handleClose = () => {
     if (!uploading) {
       setUploadFile(null);
+      setUploadSiteName('');
       setUploadComment('');
       setUploadHyperlink('');
       onClose();
@@ -73,7 +88,7 @@ const UploadModal = ({
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Upload AI Report</h2>
+          <h2>Upload Inferred Report</h2>
           <button 
             className="modal-close"
             onClick={handleClose}
@@ -121,6 +136,21 @@ const UploadModal = ({
                 </label>
               </>
             )}
+          </div>
+
+          {/* Site Name Field */}
+          <div className="form-group">
+            <label htmlFor="upload-site-name">Site Name (Optional)</label>
+            <select
+              id="upload-site-name"
+              value={uploadSiteName}
+              onChange={(e) => setUploadSiteName(e.target.value)}
+            >
+              <option value="">Select a site...</option>
+              {sites.map(site => (
+                <option key={site} value={site}>{site}</option>
+              ))}
+            </select>
           </div>
 
           {/* Comment Field */}

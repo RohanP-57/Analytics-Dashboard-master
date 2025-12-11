@@ -56,7 +56,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
     }
 
     // Get optional fields from request body
-    const { comment, hyperlink } = req.body;
+    const { comment, hyperlink, siteName } = req.body;
 
     // Determine department based on user role
     let department = req.user.department;
@@ -111,6 +111,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       filename: req.file.originalname,
       cloudinary_url: uploadResult.secure_url,
       cloudinary_public_id: uploadResult.public_id,
+      site_name: siteName || null,
       department: department,
       uploaded_by: req.user.id,
       file_size: req.file.size,
@@ -143,9 +144,10 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
   }
 });
 
-// Get Inferred Reports for user's department
+// Get Inferred Reports with filtering
 router.get('/list', authenticateToken, async (req, res) => {
   try {
+    const { department, site, search } = req.query;
     let documents;
 
     // Admin can see all documents, users only see their department's documents
@@ -158,10 +160,29 @@ router.get('/list', authenticateToken, async (req, res) => {
       documents = await InferredReports.getDocumentsByDepartment(req.user.department);
     }
 
+    // Apply filters
+    if (department && department !== 'all') {
+      documents = documents.filter(doc => doc.department === department);
+    }
+    
+    if (site && site !== 'all') {
+      documents = documents.filter(doc => doc.site_name === site);
+    }
+    
+    if (search && search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      documents = documents.filter(doc => 
+        (doc.filename && doc.filename.toLowerCase().includes(searchTerm)) ||
+        (doc.site_name && doc.site_name.toLowerCase().includes(searchTerm)) ||
+        (doc.comment && doc.comment.toLowerCase().includes(searchTerm))
+      );
+    }
+
     res.json({
       documents: documents.map(doc => ({
         id: doc.id,
         filename: doc.filename,
+        site_name: doc.site_name || null,
         department: doc.department,
         uploaded_by: doc.uploaded_by_name || 'Unknown',
         upload_date: doc.upload_date,

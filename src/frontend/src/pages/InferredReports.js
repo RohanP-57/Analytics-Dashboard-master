@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Upload } from 'lucide-react';
+import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
 import UploadModal from '../components/UploadModal';
 import DetailsModal from '../components/DetailsModal';
 import '../styles/UploadATR.css';
@@ -13,6 +13,8 @@ const InferredReports = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedSite, setSelectedSite] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -29,22 +31,39 @@ const InferredReports = () => {
     'Super Admin'
   ];
 
+  const sites = [
+    'Site A',
+    'Site B', 
+    'Site C',
+    'Bukaro',
+    'BNK Mines',
+    'Dhori',
+    'Kathara'
+  ];
+
   useEffect(() => {
     fetchDocuments();
   }, []);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchDocuments();
-    }
-  }, [selectedDepartment, isAdmin]);
+    fetchDocuments();
+  }, [selectedDepartment, selectedSite, searchTerm]);
 
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const params = isAdmin && selectedDepartment !== 'all'
-        ? { department: selectedDepartment }
-        : {};
+      const params = {};
+      
+      // Add filters to params
+      if (isAdmin && selectedDepartment !== 'all') {
+        params.department = selectedDepartment;
+      }
+      if (selectedSite !== 'all') {
+        params.site = selectedSite;
+      }
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
 
       const response = await api.get('/inferred-reports/list', { params });
       const documentsData = response.data?.documents || [];
@@ -58,9 +77,15 @@ const InferredReports = () => {
     }
   };
 
-  const filteredDocuments = isAdmin && selectedDepartment !== 'all'
-    ? documents.filter(doc => doc.department === selectedDepartment)
-    : documents;
+  const handleSearch = () => {
+    fetchDocuments();
+  };
+
+  const handleClearFilters = () => {
+    setSelectedDepartment('all');
+    setSelectedSite('all');
+    setSearchTerm('');
+  };
 
   const isValidUrl = (string) => {
     try {
@@ -71,7 +96,7 @@ const InferredReports = () => {
     }
   };
 
-  const handleUpload = async ({ file, comment, hyperlink }) => {
+  const handleUpload = async ({ file, siteName, comment, hyperlink }) => {
     if (!file) {
       toast.error('Please select a PDF file');
       return;
@@ -97,6 +122,7 @@ const InferredReports = () => {
 
       const formData = new FormData();
       formData.append('pdf', file);
+      if (siteName) formData.append('siteName', siteName);
       if (comment) formData.append('comment', comment);
       if (hyperlink) formData.append('hyperlink', hyperlink);
 
@@ -315,6 +341,63 @@ const InferredReports = () => {
         <p>Upload and manage inferred reports for {user?.department || (isAdmin ? 'Admin' : 'your department')}</p>
       </div>
 
+      {/* Filters and Search Section */}
+      <div className="filters-section">
+        <div className="filters-row">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search by filename, site, or comment..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <button onClick={handleSearch} className="search-button">
+              <Search size={18} />
+              Search
+            </button>
+          </div>
+          
+          <div className="filter-controls">
+            <div className="filter-group">
+              <label>Site Filter:</label>
+              <select
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
+                className="site-filter"
+              >
+                <option value="all">All Sites</option>
+                {sites.map(site => (
+                  <option key={site} value={site}>{site}</option>
+                ))}
+              </select>
+            </div>
+            
+            {isAdmin && (
+              <div className="filter-group">
+                <label>Department Filter:</label>
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className="department-filter"
+                >
+                  <option value="all">All Departments</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            <button onClick={handleClearFilters} className="clear-filters-button">
+              <Filter size={16} />
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Upload Button */}
       <div className="upload-button-section">
         <button 
@@ -345,18 +428,6 @@ const InferredReports = () => {
             )}
           </div>
           <div className="header-right">
-            {isAdmin && (
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                className="department-filter"
-              >
-                <option value="all">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            )}
             <button onClick={fetchDocuments} className="refresh-button" disabled={loading}>
               {loading ? '🔄' : '↻'} Refresh
             </button>
@@ -380,16 +451,15 @@ const InferredReports = () => {
               <thead>
                 <tr>
                   <th>Filename</th>
+                  <th>Site Name</th>
                   <th>Department</th>
-                  <th>Uploaded By</th>
                   <th>Upload Date</th>
-                  <th>File Size</th>
                   <th>Details</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredDocuments.filter(doc => doc && doc.id).map((doc) => (
+                {documents.filter(doc => doc && doc.id).map((doc) => (
                   <tr key={doc.id}>
                     <td className="filename-cell">
                       <div className="file-info">
@@ -397,10 +467,9 @@ const InferredReports = () => {
                         <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
                     </td>
+                    <td>{doc.site_name || 'N/A'}</td>
                     <td>{doc.department || 'N/A'}</td>
-                    <td>{(doc.uploaded_by || 'Unknown').replace(/_/g, ' ')}</td>
                     <td>{doc.upload_date ? formatDate(doc.upload_date) : 'N/A'}</td>
-                    <td>{doc.file_size ? formatFileSize(doc.file_size) : 'N/A'}</td>
                     
                     {/* Details Column with Badges */}
                     <td className="details-cell">

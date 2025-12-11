@@ -6,6 +6,7 @@ class InferredReportsModel {
       filename, 
       cloudinary_url, 
       cloudinary_public_id, 
+      site_name,
       department, 
       uploaded_by, 
       file_size,
@@ -16,9 +17,9 @@ class InferredReportsModel {
     try {
       const result = await database.run(
         `INSERT INTO inferred_reports 
-         (filename, cloudinary_url, cloudinary_public_id, department, uploaded_by, file_size, upload_date, comment, hyperlink) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [filename, cloudinary_url, cloudinary_public_id, department, uploaded_by, file_size, new Date().toISOString(), comment || null, hyperlink || null]
+         (filename, cloudinary_url, cloudinary_public_id, site_name, department, uploaded_by, file_size, upload_date, comment, hyperlink) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [filename, cloudinary_url, cloudinary_public_id, site_name || null, department, uploaded_by, file_size, new Date().toISOString(), comment || null, hyperlink || null]
       );
 
       return {
@@ -43,7 +44,7 @@ class InferredReportsModel {
       try {
         const documents = await database.all(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   ir.comment, ir.ai_report_url, ir.ai_report_public_id, ir.hyperlink,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
@@ -58,7 +59,7 @@ class InferredReportsModel {
         console.log('⚠️ New columns not found, using fallback query');
         const documents = await database.all(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
            LEFT JOIN "user" u ON ir.uploaded_by = u.id 
@@ -86,7 +87,7 @@ class InferredReportsModel {
       try {
         const documents = await database.all(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   ir.comment, ir.ai_report_url, ir.ai_report_public_id, ir.hyperlink,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
@@ -99,7 +100,7 @@ class InferredReportsModel {
         console.log('⚠️ New columns not found, using fallback query');
         const documents = await database.all(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
            LEFT JOIN "user" u ON ir.uploaded_by = u.id 
@@ -125,7 +126,7 @@ class InferredReportsModel {
       try {
         const document = await database.get(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   ir.comment, ir.ai_report_url, ir.ai_report_public_id, ir.hyperlink,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
@@ -139,7 +140,7 @@ class InferredReportsModel {
         console.log('⚠️ New columns not found, using fallback query');
         const document = await database.get(
           `SELECT ir.id, ir.filename, ir.cloudinary_url, ir.cloudinary_public_id, 
-                  ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
+                  ir.site_name, ir.department, ir.uploaded_by, ir.file_size, ir.upload_date,
                   u.username as uploaded_by_name 
            FROM inferred_reports ir 
            LEFT JOIN "user" u ON ir.uploaded_by = u.id 
