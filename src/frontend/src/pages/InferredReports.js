@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, Trash2, Upload, Search, Filter } from 'lucide-react';
+import { Eye, Trash2, Upload, Search, Filter, Edit2, Check, X } from 'lucide-react';
 import UploadModal from '../components/UploadModal';
 import DetailsModal from '../components/DetailsModal';
 import '../styles/UploadATR.css';
@@ -18,6 +18,8 @@ const InferredReports = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [editingHyperlink, setEditingHyperlink] = useState(null);
+  const [editHyperlinkValue, setEditHyperlinkValue] = useState('');
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
@@ -168,7 +170,59 @@ const InferredReports = () => {
     setSelectedDocument(null);
   };
 
+  // Hyperlink Edit/Delete Handlers
+  const handleEditHyperlink = (doc) => {
+    setEditingHyperlink(doc.id);
+    setEditHyperlinkValue(doc.hyperlink || '');
+  };
 
+  const handleSaveHyperlink = async (docId) => {
+    // Validate URL
+    if (!editHyperlinkValue.trim()) {
+      toast.error('Hyperlink cannot be empty');
+      return;
+    }
+
+    if (!isValidUrl(editHyperlinkValue.trim())) {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    try {
+      await api.patch(`/inferred-reports/${docId}/hyperlink`, {
+        hyperlink: editHyperlinkValue.trim()
+      });
+      toast.success('Hyperlink updated successfully');
+      setEditingHyperlink(null);
+      setEditHyperlinkValue('');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Update hyperlink error:', error);
+      toast.error(error.response?.data?.error || 'Failed to update hyperlink');
+    }
+  };
+
+  const handleCancelEditHyperlink = () => {
+    setEditingHyperlink(null);
+    setEditHyperlinkValue('');
+  };
+
+  const handleDeleteHyperlink = async (docId) => {
+    if (!window.confirm('Are you sure you want to delete this hyperlink?')) {
+      return;
+    }
+
+    try {
+      await api.patch(`/inferred-reports/${docId}/hyperlink`, {
+        hyperlink: null
+      });
+      toast.success('Hyperlink deleted successfully');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Delete hyperlink error:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete hyperlink');
+    }
+  };
 
   const handleUploadAtr = async (documentId, file, site, department, comment) => {
     try {
@@ -307,11 +361,11 @@ const InferredReports = () => {
                 <tr>
                   <th>S. No.</th>
                   <th>File Name</th>
+                  <th>Actions</th>
                   <th>Site Name</th>
                   <th>Date/Time</th>
                   <th>Video Link</th>
                   <th>Upload ATR</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,39 +377,6 @@ const InferredReports = () => {
                         <span className="file-icon">📄</span>
                         <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
-                    </td>
-                    <td>{doc.site_name || 'N/A'}</td>
-                    <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : 'N/A'}</td>
-                    <td className="video-link-cell">
-                      {doc.hyperlink ? (
-                        <a 
-                          href={doc.hyperlink} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="video-link"
-                          title="Open video link"
-                        >
-                          🔗 Link
-                        </a>
-                      ) : (
-                        <span className="no-link">-</span>
-                      )}
-                    </td>
-                    <td className="upload-atr-cell">
-                      <button
-                        onClick={() => openDetailsModal(doc)}
-                        className="upload-atr-button"
-                        title="Upload ATR Document"
-                      >
-                        <Upload size={16} />
-                        <span>Upload ATR</span>
-                      </button>
                     </td>
                     <td className="actions-cell">
                       <button
@@ -374,6 +395,87 @@ const InferredReports = () => {
                           <Trash2 size={18} />
                         </button>
                       )}
+                    </td>
+                    <td>{doc.site_name || 'N/A'}</td>
+                    <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : 'N/A'}</td>
+                    <td className="video-link-cell">
+                      {editingHyperlink === doc.id ? (
+                        <div className="edit-field">
+                          <input
+                            type="url"
+                            value={editHyperlinkValue}
+                            onChange={(e) => setEditHyperlinkValue(e.target.value)}
+                            placeholder="Enter video link URL"
+                            className="hyperlink-input"
+                          />
+                          <button
+                            onClick={() => handleSaveHyperlink(doc.id)}
+                            className="icon-button save"
+                            title="Save"
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            onClick={handleCancelEditHyperlink}
+                            className="icon-button cancel"
+                            title="Cancel"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="view-field">
+                          {doc.hyperlink ? (
+                            <>
+                              <a 
+                                href={doc.hyperlink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="video-link"
+                                title="Open video link"
+                              >
+                                🔗 Link
+                              </a>
+                              {doc.canEdit && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditHyperlink(doc)}
+                                    className="icon-button edit"
+                                    title="Edit hyperlink"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteHyperlink(doc.id)}
+                                    className="icon-button delete"
+                                    title="Delete hyperlink"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <span className="no-link">-</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="upload-atr-cell">
+                      <button
+                        onClick={() => openDetailsModal(doc)}
+                        className="upload-atr-button"
+                        title="Upload ATR Document"
+                      >
+                        <Upload size={16} />
+                        <span>Upload ATR</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

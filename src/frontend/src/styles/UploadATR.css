@@ -1522,7 +1522,7 @@
 
 /* Video Link Cell Styles */
 .video-link-cell {
-  text-align: center;
+  min-width: 200px;
 }
 
 .video-link-cell .video-link {
@@ -1545,6 +1545,34 @@
 .video-link-cell .no-link {
   color: #9ca3af;
   font-style: italic;
+}
+
+.video-link-cell .edit-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.video-link-cell .view-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+.hyperlink-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #3b82f6;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  min-width: 200px;
+}
+
+.hyperlink-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Upload ATR Cell Styles */
