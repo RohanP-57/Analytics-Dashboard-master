@@ -106,7 +106,8 @@ const InferredReports = () => {
       return;
     }
 
-    if (!hyperlink || !isValidUrl(hyperlink)) {
+    // Validate hyperlink only if provided
+    if (hyperlink && !isValidUrl(hyperlink)) {
       toast.error('Please enter a valid URL for the hyperlink');
       return;
     }
@@ -370,7 +371,7 @@ const InferredReports = () => {
                 <tr>
                   <th>S. No.</th>
                   <th>File Name</th>
-                  {isAdmin && <th>Actions</th>}
+                  <th>Actions</th>
                   <th>Site Name</th>
                   <th>Date/Time</th>
                   <th>Video Link</th>
@@ -395,26 +396,24 @@ const InferredReports = () => {
                         <span className="filename">{doc.filename || 'Unknown'}</span>
                       </div>
                     </td>
-                    {isAdmin && (
-                      <td className="actions-cell">
+                    <td className="actions-cell">
+                      <button
+                        onClick={() => handleView(doc.id)}
+                        className="icon-button view"
+                        title="View Document"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {isAdmin && doc.canDelete && (
                         <button
-                          onClick={() => handleView(doc.id)}
-                          className="icon-button view"
-                          title="View Document"
+                          onClick={() => handleDelete(doc.id, doc.filename)}
+                          className="icon-button delete"
+                          title="Delete Document"
                         >
-                          <Eye size={18} />
+                          <Trash2 size={18} />
                         </button>
-                        {doc.canDelete && (
-                          <button
-                            onClick={() => handleDelete(doc.id, doc.filename)}
-                            className="icon-button delete"
-                            title="Delete Document"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </td>
-                    )}
+                      )}
+                    </td>
                     <td>{doc.site_name || 'N/A'}</td>
                     <td>{doc.upload_date ? new Date(doc.upload_date).toLocaleString('en-US', {
                       year: 'numeric',

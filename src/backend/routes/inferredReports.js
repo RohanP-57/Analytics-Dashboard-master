@@ -61,14 +61,10 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       return res.status(400).json({ error: 'No PDF file provided' });
     }
 
-    // Get required fields from request body
+    // Get fields from request body
     const { hyperlink, siteName } = req.body;
 
-    // Validate hyperlink is provided
-    if (!hyperlink) {
-      console.log('❌ Hyperlink is required');
-      return res.status(400).json({ error: 'Hyperlink is required' });
-    }
+    // Hyperlink is optional - can be added later via edit
 
     // Determine department based on user role
     let department = req.user.department;
@@ -127,7 +123,7 @@ router.post('/upload', authenticateToken, upload.single('pdf'), async (req, res)
       department: department,
       uploaded_by: req.user.id,
       file_size: req.file.size,
-      hyperlink: hyperlink
+      hyperlink: hyperlink || null
     };
 
     const document = await InferredReports.createDocument(documentData);
