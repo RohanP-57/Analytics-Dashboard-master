@@ -259,15 +259,8 @@ router.get('/view/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Check if user can access this document
-    const canAccess = req.user.role === 'admin' ||
-      req.user.userType === 'admin' ||
-      document.department === req.user.department;
-
-    if (!canAccess) {
-      console.log('❌ Access denied - User department:', req.user.department, 'Document department:', document.department);
-      return res.status(403).json({ error: 'Access denied' });
-    }
+    // All authenticated users can view inferred reports
+    // No department check needed
 
     console.log('📄 Document found:', document.filename);
     console.log('🔗 Cloudinary public_id:', document.cloudinary_public_id);

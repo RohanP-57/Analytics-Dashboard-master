@@ -89,8 +89,7 @@ const DetailsModal = ({
               <h4>📊 Upload ATR</h4>
             </div>
             <div className="detail-card-body">
-              {document.canEdit && (
-                <div className="atr-upload-form">
+              <div className="atr-upload-form">
                   <div className="form-group">
                     <label htmlFor="atr-file">PDF File *</label>
                     <input
@@ -182,7 +181,6 @@ const DetailsModal = ({
                     )}
                   </button>
                 </div>
-              )}
             </div>
           </div>
 
