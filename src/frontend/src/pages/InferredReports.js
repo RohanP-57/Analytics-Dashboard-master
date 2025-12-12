@@ -471,7 +471,18 @@ const InferredReports = () => {
                               )}
                             </>
                           ) : (
-                            <span className="no-link">-</span>
+                            <>
+                              <span className="no-link">-</span>
+                              {doc.canEdit && isAdmin && (
+                                <button
+                                  onClick={() => handleEditHyperlink(doc)}
+                                  className="icon-button edit"
+                                  title="Add hyperlink"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
