@@ -388,6 +388,71 @@ class ViolationModel {
       throw new Error(`Database error during image URL migration: ${err.message}`);
     }
   }
+
+  async bulkInsert(violations) {
+    try {
+      let insertedCount = 0;
+      let failedCount = 0;
+
+      for (const violation of violations) {
+        try {
+          // Check if violation already exists
+          const existing = await database.get(
+            'SELECT id FROM violations WHERE id = ?',
+            [violation.id]
+          );
+
+          if (existing) {
+            console.log(`Violation ${violation.id} already exists, skipping...`);
+            failedCount++;
+            continue;
+          }
+
+          // Insert violation with all original data including timestamps
+          await database.run(`
+            INSERT INTO violations (
+              id, report_id, drone_id, date, location, type, 
+              timestamp, latitude, longitude, image_url, 
+              confidence, frame_number
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            violation.id,
+            violation.report_id || null,
+            violation.drone_id,
+            violation.date,
+            violation.location,
+            violation.type,
+            violation.timestamp,
+            violation.latitude,
+            violation.longitude,
+            violation.image_url,
+            violation.confidence || null,
+            violation.frame_number || null
+          ]);
+
+          insertedCount++;
+        } catch (err) {
+          console.error(`Failed to insert violation ${violation.id}:`, err.message);
+          failedCount++;
+        }
+      }
+
+      // Sync features after bulk insert
+      try {
+        const { syncFeaturesFromViolations } = require('../utils/featureSync');
+        await syncFeaturesFromViolations();
+      } catch (syncError) {
+        console.log('Note: Could not sync features automatically:', syncError.message);
+      }
+
+      return {
+        inserted_count: insertedCount,
+        failed_count: failedCount
+      };
+    } catch (err) {
+      throw new Error(`Bulk insert error: ${err.message}`);
+    }
+  }
 }
 
 module.exports = new ViolationModel(); 

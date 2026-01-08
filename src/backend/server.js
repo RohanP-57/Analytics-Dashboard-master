@@ -15,6 +15,7 @@ const sitesRoutes = require('./routes/sites');
 const atrRoutes = require('./routes/atr');
 const inferredReportsRoutes = require('./routes/inferredReports');
 const uploadedATRRoutes = require('./routes/uploadedATR');
+const restoreRoutes = require('./routes/restore');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -48,6 +49,7 @@ app.use('/api/boundaries', boundariesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/features', featuresRoutes);
 app.use('/api/video-links', videoLinksRoutes);
+app.use('/api/restore', restoreRoutes);
 app.use('/api/sites', sitesRoutes);
 app.use('/api/atr', atrRoutes);
 app.use('/api/inferred-reports', inferredReportsRoutes);
