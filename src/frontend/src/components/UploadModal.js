@@ -5,23 +5,13 @@ const UploadModal = ({
   showModal, 
   onClose, 
   onUpload, 
-  uploading 
+  uploading,
+  sites = [] // Accept sites as prop
 }) => {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadSiteName, setUploadSiteName] = useState('');
   const [uploadHyperlink, setUploadHyperlink] = useState('');
   const [dragActive, setDragActive] = useState(false);
-
-  // Available sites
-  const sites = [
-    'Site A',
-    'Site B', 
-    'Site C',
-    'Bukaro',
-    'BNK Mines',
-    'Dhori',
-    'Kathara'
-  ];
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -145,7 +135,9 @@ const UploadModal = ({
             >
               <option value="">Select a site (required)...</option>
               {sites.map(site => (
-                <option key={site} value={site}>{site}</option>
+                <option key={site.id || site} value={site.name || site}>
+                  {site.name || site}
+                </option>
               ))}
             </select>
           </div>

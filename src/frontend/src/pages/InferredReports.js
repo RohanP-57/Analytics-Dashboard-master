@@ -20,26 +20,30 @@ const InferredReports = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [editingHyperlink, setEditingHyperlink] = useState(null);
   const [editHyperlinkValue, setEditHyperlinkValue] = useState('');
+  const [sites, setSites] = useState([]); // Dynamic sites from database
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
 
-  const sites = [
-    'Site A',
-    'Site B', 
-    'Site C',
-    'Bukaro',
-    'BNK Mines',
-    'Dhori',
-    'Kathara'
-  ];
-
   useEffect(() => {
     fetchDocuments();
+    fetchSites(); // Fetch sites on mount
   }, []);
 
   useEffect(() => {
     fetchDocuments();
   }, [selectedSite, dateFilter, searchTerm]);
+
+  const fetchSites = async () => {
+    try {
+      const response = await api.get('/sites');
+      if (response.data.success) {
+        setSites(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      toast.error('Failed to load sites');
+    }
+  };
 
   const fetchDocuments = async () => {
     try {
@@ -302,7 +306,7 @@ const InferredReports = () => {
               >
                 <option value="all">All Sites</option>
                 {sites.map(site => (
-                  <option key={site} value={site}>{site}</option>
+                  <option key={site.id} value={site.name}>{site.name}</option>
                 ))}
               </select>
             </div>
@@ -335,6 +339,7 @@ const InferredReports = () => {
         onClose={() => setShowUploadModal(false)}
         onUpload={handleUpload}
         uploading={uploading}
+        sites={sites}
       />
 
       {/* Documents List */}

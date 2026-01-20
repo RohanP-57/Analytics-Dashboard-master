@@ -15,19 +15,9 @@ const UploadedATR = () => {
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [editingComment, setEditingComment] = useState(null);
   const [editCommentValue, setEditCommentValue] = useState('');
+  const [sites, setSites] = useState([]); // Dynamic sites from database
 
   const isAdmin = user?.role === 'admin' || user?.userType === 'admin' || user?.username === 'AEROVANIA MASTER';
-
-  // Available sites
-  const sites = [
-    'Site A',
-    'Site B', 
-    'Site C',
-    'Bukaro',
-    'BNK Mines',
-    'Dhori',
-    'Kathara'
-  ];
 
   // Available departments
   const departments = [
@@ -42,11 +32,24 @@ const UploadedATR = () => {
 
   useEffect(() => {
     fetchATRDocuments();
+    fetchSites(); // Fetch sites on mount
   }, []);
 
   useEffect(() => {
     fetchATRDocuments();
   }, [searchTerm, dateFilter, siteFilter, departmentFilter]);
+
+  const fetchSites = async () => {
+    try {
+      const response = await api.get('/sites');
+      if (response.data.success) {
+        setSites(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      toast.error('Failed to load sites');
+    }
+  };
 
   const fetchATRDocuments = async () => {
     try {
@@ -179,7 +182,7 @@ const UploadedATR = () => {
               >
                 <option value="">All Sites</option>
                 {sites.map(site => (
-                  <option key={site} value={site}>{site}</option>
+                  <option key={site.id} value={site.name}>{site.name}</option>
                 ))}
               </select>
             </div>
